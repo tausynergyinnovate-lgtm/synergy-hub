@@ -1,0 +1,35 @@
+'use client';
+
+import { useState } from 'react';
+import { useHub } from '@/lib/hub';
+import type { TableName } from '@/lib/types';
+import { FormModal, type Field } from './ui';
+import { clean } from './forms';
+
+type Row = Record<string, unknown> & { id?: string };
+
+/** One reusable add/edit dialog for any table. */
+export function useEditor() {
+  const { save, remove } = useHub();
+  const [state, setState] = useState<{ table: TableName; row: Row; fields: Field[]; title: string; transform?: (r: Row) => Row } | null>(null);
+
+  const open = (table: TableName, fields: Field[], row: Row, title: string, transform?: (r: Row) => Row) =>
+    setState({ table, fields, row, title, transform });
+
+  const element = (
+    <FormModal
+      open={!!state}
+      onClose={() => setState(null)}
+      title={state?.title ?? ''}
+      fields={state?.fields ?? []}
+      initial={state?.row ?? {}}
+      onSubmit={async (v: Row) => {
+        if (!state) return;
+        const r = clean(state.transform ? state.transform(v) : v);
+        await save(state.table, r);
+      }}
+      onDelete={state?.row.id ? async () => { if (state?.row.id) await remove(state.table, state.row.id); } : undefined}
+    />
+  );
+  return { open, element };
+}
