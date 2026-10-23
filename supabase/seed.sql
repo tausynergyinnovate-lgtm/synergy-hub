@@ -99,5 +99,5 @@ insert into public.links (title, url, kind, project_id, pinned) values
 insert into public.settings (key, value) values
   ('calendar_id', ''),
   ('drive_root_url', ''),
-  ('ics_token', encode(gen_random_bytes(16), 'hex'))
+  ('ics_token', md5(random()::text || clock_timestamp()::text))
 on conflict (key) do nothing;
