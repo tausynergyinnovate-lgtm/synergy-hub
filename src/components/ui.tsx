@@ -234,7 +234,7 @@ export function FormModal<T extends Record<string, unknown>>({
   const [v, setV] = useState<T>(initial);
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (open) setV(initial); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
-  const missing = fields.some((f) => 'required' in f && f.required && !v[f.key]);
+  const missing = fields.some((f) => 'required' in f && f.required && !String(v[f.key] ?? '').trim());
   return (
     <Modal open={open} onClose={onClose} title={title}>
       <form className="space-y-3" onSubmit={async (e) => {
@@ -243,7 +243,7 @@ export function FormModal<T extends Record<string, unknown>>({
       }}>
         {fields.map((f) => (
           <label key={f.key} className={f.type === 'checkbox' ? 'flex items-center gap-2 text-sm' : 'block'}>
-            <span className={f.type === 'checkbox' ? 'text-stone-700' : 'block text-xs font-medium text-stone-500 mb-1'}>{f.label}</span>
+            <span className={f.type === 'checkbox' ? 'text-stone-700' : 'block text-xs font-medium text-stone-500 mb-1'}>{f.label}{'required' in f && f.required && <span className="text-red-500"> *</span>}</span>
             <FieldInput f={f} value={v[f.key]} onChange={(x) => setV((s) => ({ ...s, [f.key]: x }))} />
           </label>
         ))}

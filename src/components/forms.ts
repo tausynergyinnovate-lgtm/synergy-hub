@@ -28,12 +28,12 @@ export const EVENT_FIELDS: Field[] = [
 
 export const EXPENSE_FIELDS: Field[] = [
   { key: 'title', label: 'על מה', type: 'text', required: true },
-  { key: 'amount', label: 'סכום (₪)', type: 'number', required: true },
+  { key: 'status', label: 'סטטוס', type: 'select', options: opts(EXPENSE_STATUS), required: true },
+  { key: 'paid_by', label: 'מי שילם', type: 'text', required: true },
+  { key: 'amount', label: 'סכום (₪)', type: 'number' },
   { key: 'date', label: 'תאריך', type: 'date' },
-  { key: 'status', label: 'סטטוס', type: 'select', options: opts(EXPENSE_STATUS) },
   { key: 'category', label: 'קטגוריה', type: 'select', options: EXPENSE_CATEGORIES.map((c) => ({ value: c, label: c })) },
   { key: 'project_id', label: 'פרויקט', type: 'project' },
-  { key: 'paid_by', label: 'מי שילם', type: 'text' },
   { key: 'receipt_path', label: 'קבלה (תמונה או PDF)', type: 'receipt' },
   { key: 'receipt_url', label: 'או קישור לקבלה (דרייב)', type: 'url' },
   { key: 'notes', label: 'הערות', type: 'textarea' },

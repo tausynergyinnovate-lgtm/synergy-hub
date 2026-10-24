@@ -26,6 +26,8 @@ export function useEditor() {
       onSubmit={async (v: Row) => {
         if (!state) return;
         const r = clean(state.transform ? state.transform(v) : v);
+        // amount is optional in the form but NOT NULL in the DB — an empty amount is stored as 0 and filled in later
+        if (state.table === 'expenses' && r.amount == null) r.amount = 0;
         await save(state.table, r);
       }}
       onDelete={state?.row.id ? async () => { if (state?.row.id) await remove(state.table, state.row.id); } : undefined}
