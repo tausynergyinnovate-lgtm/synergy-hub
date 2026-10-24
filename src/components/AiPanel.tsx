@@ -55,9 +55,12 @@ export function AiPanel() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ message: text, projectId: aiContext.projectId, history, me: me?.id }),
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || res.statusText);
-      setMsgs((m) => [...m, { role: 'assistant', text: json.plan.reply, plan: json.plan }]);
+      const raw = await res.text();
+      let json: { plan?: AiPlan; error?: string } = {};
+      try { json = JSON.parse(raw); } catch { /* server/platform returned non-JSON (e.g. timeout page) */ }
+      if (!res.ok || !json.plan) throw new Error(json.error || (res.status === 504 ? 'העוזר לקח יותר מדי זמן — נסו שוב.' : 'משהו השתבש מול העוזר — נסו שוב.'));
+      const plan = json.plan;
+      setMsgs((m) => [...m, { role: 'assistant', text: plan.reply, plan }]);
     } catch (e) {
       setMsgs((m) => [...m, { role: 'error', text: e instanceof Error ? e.message : String(e) }]);
     } finally { setBusy(false); }

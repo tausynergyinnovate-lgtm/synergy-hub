@@ -4,7 +4,7 @@ import { PLAN_TOOL, type AiPlan } from '@/lib/aiPlan';
 import { callTool, simplifySchema } from '@/lib/aiGateway';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 60; // seconds; callTool stops itself at ~50s so we always answer with JSON
 
 export async function POST(req: Request) {
   const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
