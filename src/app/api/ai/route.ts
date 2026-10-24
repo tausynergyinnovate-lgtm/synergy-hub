@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { PLAN_TOOL, type AiPlan } from '@/lib/aiPlan';
 import { callTool, simplifySchema } from '@/lib/aiGateway';
+import { driveIdsIn, readFile, searchDrive, type DriveFile } from '@/lib/drive';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // seconds; callTool stops itself at ~50s so we always answer with JSON
@@ -32,6 +33,41 @@ export async function POST(req: Request) {
     db.from('decisions').select('id,title,status,project_id').eq('status', 'pending'),
   ]);
 
+  // ── Drive context: pasted links are read directly; otherwise a quick check decides whether to search ──
+  const sources: { name: string; url?: string; kind: string }[] = [];
+  let driveContext = '';
+  try {
+    const docs: { file: DriveFile; text: string }[] = [];
+    const ids = driveIdsIn(body.message);
+    if (ids.length) {
+      for (const id of ids) docs.push(await readFile(id));
+    } else {
+      const projectNames = (projects.data ?? []).map((p: { name: string }) => p.name).join(', ');
+      const { args } = await callTool<{ needed: boolean; query: string }>(
+        [
+          { role: 'system', content: `You decide whether answering a manager's message needs documents from the team's Google Drive (meeting summaries, plans, registration sheets, feedback, presentations, budgets, speaker lists, past cohort material). Projects: ${projectNames}. If yes, give 1-4 short search keywords (Hebrew or English, as the files are likely named). Plain task updates ("finished X", "assign Y to Z") do NOT need Drive.` },
+          { role: 'user', content: body.message },
+        ],
+        { name: 'drive_lookup', description: 'Decide whether to search Drive', parameters: { type: 'object', properties: { needed: { type: 'boolean' }, query: { type: 'string' } }, required: ['needed', 'query'] } },
+        200, 12_000,
+      );
+      if (args.needed && args.query?.trim()) {
+        const hits = await searchDrive(args.query, 8);
+        hits.forEach((h) => sources.push({ name: h.name, url: h.webViewLink, kind: h.kind }));
+        const readable = hits.filter((h) => ['מסמך', 'גיליון', 'מצגת'].includes(h.kind)).slice(0, 2);
+        for (const h of readable) docs.push(await readFile(h.id, 8000));
+        if (hits.length) driveContext += `\nקבצים שנמצאו בדרייב לחיפוש "${args.query}":\n` + hits.map((h) => `- ${h.name} (${h.kind}) ${h.webViewLink ?? ''}`).join('\n');
+      }
+    }
+    for (const d of docs) {
+      if (!sources.some((x) => x.name === d.file.name)) sources.push({ name: d.file.name, url: d.file.webViewLink, kind: d.file.kind });
+      driveContext += `\n\n=== קובץ: ${d.file.name} (${d.file.kind}) ${d.file.webViewLink ?? ''} ===\n${d.text}`;
+    }
+  } catch (e) {
+    console.error('[ai] drive context failed:', e);
+    driveContext = '\n(הגישה לדרייב נכשלה כרגע — ענה בלי קבצים וציין זאת.)';
+  }
+
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jerusalem' }).format(new Date());
   const weekday = new Intl.DateTimeFormat('he-IL', { timeZone: 'Asia/Jerusalem', weekday: 'long' }).format(new Date());
   const snapshot = {
@@ -59,16 +95,20 @@ export async function POST(req: Request) {
 - כסף שהוזכר → expenses (בשקלים). החלטות → decisions.
 - השתמש רק ב-id-ים שמופיעים בתמונת המצב. אל תמציא id.
 
+- אם מצורף תוכן מהדרייב — השתמש בו כמקור, ציין ב-reply מאיזה קובץ לקחת את המידע. אם לא נמצא קובץ רלוונטי — אמור זאת בפשטות.
+
 תמונת מצב של ההאב (JSON):
-${JSON.stringify(snapshot)}`;
+${JSON.stringify(snapshot)}
+${driveContext ? '\nתוכן מהדרייב של סינרגי (לקריאה בלבד):' + driveContext : ''}`;
 
   const history = (body.history ?? []).slice(-8);
   try {
     const { args, model } = await callTool<AiPlan>(
       [{ role: 'system', content: system }, ...history.map((h) => ({ role: h.role, content: h.content })), { role: 'user', content: body.message }],
       { name: PLAN_TOOL.name, description: PLAN_TOOL.description, parameters: simplifySchema(PLAN_TOOL.input_schema) as Record<string, unknown> },
+      6000, 38_000,
     );
-    return NextResponse.json({ plan: { ...args, reply: args.reply ?? '' }, model });
+    return NextResponse.json({ plan: { ...args, reply: args.reply ?? '' }, model, sources });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: msg }, { status: 502 });

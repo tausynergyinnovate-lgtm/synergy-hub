@@ -1,21 +1,24 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUp, Check, Sparkles, X } from 'lucide-react';
+import { ArrowUp, Check, FileText, Sparkles, X } from 'lucide-react';
 import { getAccessToken, useHub } from '@/lib/hub';
 import type { AiPlan, PlanTask } from '@/lib/aiPlan';
 import { CONTACT_KIND, CONTACT_STATUS, EVENT_KIND, fmtDate, ils } from '@/lib/labels';
 import { Badge, Button } from './ui';
 
+type Source = { name: string; url?: string; kind: string };
+
 type Msg =
   | { role: 'user'; text: string }
-  | { role: 'assistant'; text: string; plan?: AiPlan; applied?: string }
+  | { role: 'assistant'; text: string; plan?: AiPlan; applied?: string; sources?: Source[] }
   | { role: 'error'; text: string };
 
 const EXAMPLES = [
   'מתחילים לארגן את וובינר דצמבר עם ארז נעמן — תפרק לי את כל מה שצריך',
   'סיימתי לסדר את הדרייב',
   'מה פתוח אצל גל השבוע?',
+  'מה כתוב במסמך התכנון השנתי על מחזור 4?',
   'הנה סיכום הפגישה של היום: …',
 ];
 
@@ -56,11 +59,11 @@ export function AiPanel() {
         body: JSON.stringify({ message: text, projectId: aiContext.projectId, history, me: me?.id }),
       });
       const raw = await res.text();
-      let json: { plan?: AiPlan; error?: string } = {};
+      let json: { plan?: AiPlan; error?: string; sources?: Source[] } = {};
       try { json = JSON.parse(raw); } catch { /* server/platform returned non-JSON (e.g. timeout page) */ }
       if (!res.ok || !json.plan) throw new Error(json.error || (res.status === 504 ? 'העוזר לקח יותר מדי זמן — נסו שוב.' : 'משהו השתבש מול העוזר — נסו שוב.'));
       const plan = json.plan;
-      setMsgs((m) => [...m, { role: 'assistant', text: plan.reply, plan }]);
+      setMsgs((m) => [...m, { role: 'assistant', text: plan.reply, plan, sources: json.sources }]);
     } catch (e) {
       setMsgs((m) => [...m, { role: 'error', text: e instanceof Error ? e.message : String(e) }]);
     } finally { setBusy(false); }
@@ -82,7 +85,7 @@ export function AiPanel() {
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {msgs.length === 0 && (
             <div className="space-y-2">
-              <p className="text-sm text-stone-500 mb-3">כתבו בשפה חופשית. העוזר יציע משימות, תתי־משימות, אירועים ואנשי קשר — ושום דבר לא נשמר עד שתאשרו.</p>
+              <p className="text-sm text-stone-500 mb-3">כתבו בשפה חופשית. העוזר יציע משימות, תתי־משימות, אירועים ואנשי קשר — ושום דבר לא נשמר עד שתאשרו. הוא גם מחפש וקורא קבצים בדרייב של סינרגי, ואפשר להדביק קישור לקובץ.</p>
               {EXAMPLES.map((e) => (
                 <button key={e} onClick={() => setInput(e)} className="block w-full text-start text-sm rounded-xl border border-stone-200 bg-white px-3 py-2 hover:border-indigo-300">{e}</button>
               ))}
@@ -96,6 +99,16 @@ export function AiPanel() {
             ) : (
               <div key={i} className="space-y-2">
                 <div className="max-w-[92%] rounded-2xl rounded-se-md bg-white border border-stone-200 text-sm px-3.5 py-2 whitespace-pre-wrap text-stone-800">{m.text}</div>
+                {!!m.sources?.length && (
+                  <div className="max-w-[92%] flex flex-wrap gap-1.5">
+                    {m.sources.slice(0, 6).map((src) => (
+                      <a key={src.name} href={src.url} target="_blank" rel="noreferrer"
+                        className="inline-flex items-center gap-1 rounded-full border border-stone-200 bg-white px-2.5 py-1 text-xs text-stone-600 hover:border-indigo-300 hover:text-indigo-700">
+                        <FileText size={12} />{src.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
                 {m.plan && hasChanges(m.plan) && (
                   <PlanPreview plan={m.plan} applied={m.applied}
                     onApplied={(summary) => setMsgs((all) => all.map((x, j) => (j === i ? { ...x, applied: summary } as Msg : x)))} />

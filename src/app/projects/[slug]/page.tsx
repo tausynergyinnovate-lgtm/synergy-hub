@@ -10,9 +10,10 @@ import {
 import { Avatar, Badge, Button, Card, Empty, PersonLink, Progress } from '@/components/ui';
 import { TaskTree } from '@/components/tasks';
 import { openReceipt } from '@/components/Receipt';
+import { DriveFiles } from '@/components/DriveFiles';
 import { useEditor } from '@/components/useEditor';
 import {
-  CONTACT_FIELDS, DECISION_FIELDS, EVENT_FIELDS, EXPENSE_FIELDS, LINK_FIELDS, PROJECT_FIELDS, driveFolderId,
+  CONTACT_FIELDS, DECISION_FIELDS, EVENT_FIELDS, EXPENSE_FIELDS, LINK_FIELDS, PROJECT_FIELDS ,
 } from '@/components/forms';
 
 export default function ProjectPage() {
@@ -33,7 +34,6 @@ export default function ProjectPage() {
   const planned = expenses.filter((x) => x.status === 'planned').reduce((s, x) => s + Number(x.amount), 0);
   const decisions = data.decisions.filter((d) => d.project_id === p.id);
   const links = data.links.filter((l) => l.project_id === p.id);
-  const folderId = driveFolderId(p.drive_url);
   // people involved: owner + task assignees + event owners + contact owners
   const peopleIds = Array.from(new Set([p.owner_id, ...tasks.map((t) => t.assignee_id), ...events.map((e) => e.owner_id), ...contacts.map((c) => c.owner_id)].filter(Boolean))) as string[];
 
@@ -99,10 +99,9 @@ export default function ProjectPage() {
             </ol>
           </Card>
 
-          {folderId && (
-            <Card title="קבצים בדרייב" action={<a href={p.drive_url!} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"><ExternalLink size={12} />פתיחה בדרייב</a>}>
-              <iframe title="Drive" src={`https://drive.google.com/embeddedfolderview?id=${folderId}#list`} className="w-full h-72 rounded-xl border border-stone-100" />
-              <p className="text-xs text-stone-400 mt-2">מוצג רק למי שהתיקייה משותפת איתו ומחובר לגוגל בדפדפן.</p>
+          {p.drive_url && (
+            <Card title="קבצים בדרייב" action={<a href={p.drive_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"><ExternalLink size={12} />פתיחה בדרייב</a>}>
+              <DriveFiles folderUrl={p.drive_url} />
             </Card>
           )}
         </div>
