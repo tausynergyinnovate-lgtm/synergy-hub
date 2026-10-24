@@ -113,7 +113,7 @@ export function HubProvider({ children }: { children: React.ReactNode }) {
   }, [loadAll]);
 
   useEffect(() => {
-    if (phase === 'signed_out' && pathname !== '/login') router.replace('/login');
+    if (phase === 'signed_out' && pathname !== '/login' && pathname !== '/privacy') router.replace('/login');
     if (phase === 'ready' && pathname === '/login') router.replace('/');
   }, [phase, pathname, router]);
 

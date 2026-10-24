@@ -53,7 +53,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('keydown', h);
   }, [setSearchOpen]);
 
-  if (pathname === '/login') return <>{children}</>;
+  if (pathname === '/login' || pathname === '/privacy') return <>{children}</>;
   if (phase === 'unconfigured') return (
     <Center>
       <Logo />

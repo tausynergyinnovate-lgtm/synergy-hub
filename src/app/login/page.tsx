@@ -27,7 +27,7 @@ export default function LoginPage() {
         </button>
         {err && <p className="text-sm text-red-600 mt-3">{err}</p>}
         {!isConfigured && <p className="text-xs text-stone-400 mt-3">חסרים משתני סביבה של Supabase</p>}
-        <p className="text-xs text-stone-400 mt-6">הכניסה למנהלי הקהילה בלבד</p>
+        <p className="text-xs text-stone-400 mt-6">הכניסה למנהלי הקהילה בלבד · <a href="/privacy" className="underline">פרטיות</a></p>
       </div>
     </div>
   );
