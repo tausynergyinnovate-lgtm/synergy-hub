@@ -5,15 +5,15 @@ import { getVercelOidcToken } from '@vercel/oidc';
 
 const GATEWAY = 'https://ai-gateway.vercel.sh/v1/chat/completions';
 const GEMINI = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-const useGemini = () => Boolean(process.env.GEMINI_API_KEY);
+const isGemini = () => Boolean(process.env.GEMINI_API_KEY);
 
 // Tried in order; the first model the account may use wins.
 const GATEWAY_MODELS = [process.env.AI_MODEL, 'anthropic/claude-haiku-5.5', 'google/gemini-3-flash', 'google/gemini-2.5-flash'];
 const GEMINI_MODELS = [process.env.AI_MODEL, 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
-export const models = () => (useGemini() ? GEMINI_MODELS : GATEWAY_MODELS).filter(Boolean) as string[];
+export const models = () => (isGemini() ? GEMINI_MODELS : GATEWAY_MODELS).filter(Boolean) as string[];
 
 async function token(): Promise<string> {
-  if (useGemini()) return process.env.GEMINI_API_KEY!;
+  if (isGemini()) return process.env.GEMINI_API_KEY!;
   if (process.env.AI_GATEWAY_API_KEY) return process.env.AI_GATEWAY_API_KEY;
   try { return await getVercelOidcToken(); } catch { /* fall through */ }
   if (process.env.VERCEL_OIDC_TOKEN) return process.env.VERCEL_OIDC_TOKEN;
@@ -28,7 +28,7 @@ export async function callTool<T>(messages: Msg[], tool: Tool, maxTokens = 6000)
   const auth = await token();
   const errors: string[] = [];
   for (const model of models()) {
-    const res = await fetch(useGemini() ? GEMINI : GATEWAY, {
+    const res = await fetch(isGemini() ? GEMINI : GATEWAY, {
       method: 'POST',
       headers: { Authorization: `Bearer ${auth}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
