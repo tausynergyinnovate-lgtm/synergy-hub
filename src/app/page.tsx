@@ -19,7 +19,7 @@ export default function Dashboard() {
   const in14 = addDays(today, 14);
   const open = data.tasks.filter((t) => t.status !== 'done');
   const overdue = sortTasks(open.filter((t) => t.due_date && t.due_date < today));
-  const mine = data.tasks.filter((t) => me && t.assignee_id === me.id);
+  const mine = data.tasks.filter((t) => me && t.assignee_ids?.includes(me.id));
   const upcoming = [
     ...data.events.filter((e) => (e.end_date ?? e.start_date) >= today && e.start_date <= in14).map((e) => ({ kind: 'event' as const, date: e.start_date < today ? today : e.start_date, e })),
     ...open.filter((t) => t.due_date && t.due_date >= today && t.due_date <= in14 && !t.parent_id).map((t) => ({ kind: 'task' as const, date: t.due_date!, t })),
@@ -63,7 +63,7 @@ export default function Dashboard() {
         <div className="lg:col-span-3 space-y-5 min-w-0">
           {me && (
             <Card title="המשימות שלי" action={<Link href={`/people/${me.id}`} className="text-xs text-indigo-600 hover:underline">ללוח האישי</Link>}>
-              <TaskTree tasks={mine} defaults={{ assignee_id: me.id }} hideDone emptyText="אין לך משימות פתוחות" />
+              <TaskTree tasks={mine} defaults={{ assignee_ids: [me.id] }} hideDone emptyText="אין לך משימות פתוחות" />
             </Card>
           )}
           {overdue.length > 0 && (

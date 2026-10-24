@@ -5,7 +5,7 @@ import { Check, ChevronLeft, CornerDownLeft, ExternalLink, Plus, Trash2 } from '
 import { useHub } from '@/lib/hub';
 import { PRIORITY, TASK_STATUS, dueLabel, opts } from '@/lib/labels';
 import type { Task } from '@/lib/types';
-import { Avatar, Badge, Button, FieldInput, Modal, PersonLink, ProjectLink, type Field } from './ui';
+import { Avatars, Badge, Button, FieldInput, Modal, PeopleLinks, ProjectLink, type Field } from './ui';
 
 export function sortTasks(ts: Task[]): Task[] {
   const pr = { high: 0, medium: 1, low: 2 } as Record<string, number>;
@@ -63,7 +63,7 @@ export function TaskRow({ task, showProject = true, showAssignee = true, depth =
             {due && <span className={due.cls}>{due.text}</span>}
           </div>
         </div>
-        {showAssignee && <Avatar id={task.assignee_id} size={24} />}
+        {showAssignee && <Avatars ids={task.assignee_ids} size={24} />}
       </div>
       {open && sortTasks(subs).map((s) => (
         <TaskRow key={s.id} task={s} depth={depth + 1} showProject={false} showAssignee={showAssignee} />
@@ -118,7 +118,7 @@ export function QuickAdd({ defaults, placeholder = 'משימה חדשה… (Ente
 const TASK_FIELDS: Field[] = [
   { key: 'status', label: 'סטטוס', type: 'select', options: opts(TASK_STATUS) },
   { key: 'priority', label: 'עדיפות', type: 'select', options: opts(PRIORITY) },
-  { key: 'assignee_id', label: 'אחראי/ת', type: 'manager' },
+  { key: 'assignee_ids', label: 'אחראים', type: 'managers' },
   { key: 'due_date', label: 'דדליין', type: 'date' },
   { key: 'project_id', label: 'פרויקט', type: 'project' },
   { key: 'link_url', label: 'קישור (דרייב, טופס…)', type: 'url' },
@@ -167,7 +167,7 @@ export function TaskModal() {
 
       <div className="grid grid-cols-2 gap-3 mt-3">
         {TASK_FIELDS.map((f) => (
-          <label key={f.key} className={f.key === 'link_url' ? 'col-span-2' : ''}>
+          <label key={f.key} className={f.key === 'link_url' || f.key === 'assignee_ids' ? 'col-span-2' : ''}>
             <span className="block text-xs font-medium text-stone-500 mb-1">{f.label}</span>
             <FieldInput f={f} value={t[f.key as keyof Task]} onChange={(v) => set(f.key as keyof Task, v)} />
           </label>
@@ -201,14 +201,14 @@ export function TaskModal() {
           <div className="rounded-xl border border-stone-100 px-2 py-1">
             {sortTasks(subs).map((s) => <TaskRow key={s.id} task={s} showProject={false} expandable={false} showParent={false} />)}
             <QuickAdd placeholder="הוספת תת־משימה…"
-              defaults={{ parent_id: existing.id, project_id: existing.project_id, assignee_id: existing.assignee_id, due_date: existing.due_date }} />
+              defaults={{ parent_id: existing.id, project_id: existing.project_id, assignee_ids: existing.assignee_ids, due_date: existing.due_date }} />
           </div>
         </div>
       )}
 
       {existing && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-500 mt-4">
-          <PersonLink id={existing.assignee_id} />
+          <PeopleLinks ids={existing.assignee_ids} />
           {existing.project_id && <ProjectLink id={existing.project_id} />}
         </div>
       )}

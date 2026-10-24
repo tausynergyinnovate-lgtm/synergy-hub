@@ -37,6 +37,37 @@ export function PersonLink({ id }: { id: string | null | undefined }) {
   );
 }
 
+/** Overlapping avatars for several people; empty = whole team. */
+export function Avatars({ ids, size = 24, team = true, max = 3 }: { ids: string[] | null | undefined; size?: number; team?: boolean; max?: number }) {
+  const { manager } = useHub();
+  const list = (ids ?? []).filter((id) => manager(id));
+  if (!list.length) return team ? <Avatar id={null} size={size} /> : null;
+  const shown = list.slice(0, max), extra = list.length - shown.length;
+  return (
+    <span className="inline-flex items-center shrink-0" title={list.map((id) => manager(id)?.name).join(', ')}>
+      {shown.map((id, i) => (
+        <span key={id} className="rounded-full ring-2 ring-white" style={{ marginInlineStart: i ? -size * 0.3 : 0 }}><Avatar id={id} size={size} /></span>
+      ))}
+      {extra > 0 && <span className="rounded-full ring-2 ring-white bg-stone-200 text-stone-600 font-medium inline-flex items-center justify-center" style={{ width: size, height: size, fontSize: size * 0.4, marginInlineStart: -size * 0.3 }}>+{extra}</span>}
+    </span>
+  );
+}
+
+export function PeopleLinks({ ids, emptyLabel = 'כל הצוות' }: { ids: string[] | null | undefined; emptyLabel?: string }) {
+  const { manager } = useHub();
+  const list = (ids ?? []).map((id) => manager(id)).filter(Boolean) as { id: string; name: string }[];
+  if (!list.length) return <span className="inline-flex items-center gap-1.5 text-stone-500"><Avatar id={null} size={20} />{emptyLabel}</span>;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
+      {list.map((m) => (
+        <Link key={m.id} href={`/people/${m.id}`} className="inline-flex items-center gap-1.5 hover:underline" onClick={(e) => e.stopPropagation()}>
+          <Avatar id={m.id} size={20} />{m.name}
+        </Link>
+      ))}
+    </span>
+  );
+}
+
 export function ProjectLink({ id, plain }: { id: string | null | undefined; plain?: boolean }) {
   const { project } = useHub();
   const p = project(id);
@@ -128,6 +159,7 @@ export type Field =
   | { key: string; label: string; type: 'text' | 'textarea' | 'date' | 'time' | 'url' | 'email' | 'number' | 'color'; required?: boolean; placeholder?: string }
   | { key: string; label: string; type: 'select'; options: { value: string; label: string }[]; required?: boolean; allowEmpty?: string }
   | { key: string; label: string; type: 'manager'; emptyLabel?: string }
+  | { key: string; label: string; type: 'managers'; emptyLabel?: string }
   | { key: string; label: string; type: 'project' }
   | { key: string; label: string; type: 'checkbox' }
   | { key: string; label: string; type: 'receipt' };
@@ -154,6 +186,24 @@ export function FieldInput({ f, value, onChange }: { f: Field; value: unknown; o
           {data.managers.filter((m) => m.active || m.id === v).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
         </select>
       );
+    case 'managers': {
+      const sel = Array.isArray(value) ? (value as string[]) : [];
+      const toggle = (id: string) => onChange(sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]);
+      return (
+        <div className="flex flex-wrap gap-1.5">
+          {data.managers.filter((m) => m.active || sel.includes(m.id)).map((m) => {
+            const on = sel.includes(m.id);
+            return (
+              <button type="button" key={m.id} onClick={() => toggle(m.id)} aria-pressed={on}
+                className={`inline-flex items-center gap-1.5 rounded-full border ps-1 pe-3 py-1 text-sm transition ${on ? 'border-indigo-300 bg-indigo-50 text-indigo-800' : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'}`}>
+                <Avatar id={m.id} size={20} />{m.name}
+              </button>
+            );
+          })}
+          {!sel.length && <span className="text-xs text-stone-400 self-center">{f.emptyLabel ?? 'לא נבחר — כל הצוות'}</span>}
+        </div>
+      );
+    }
     case 'project':
       return (
         <select className={inputCls} value={v} onChange={(e) => onChange(e.target.value || null)}>

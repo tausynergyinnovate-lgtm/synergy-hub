@@ -24,6 +24,7 @@ try {
   if (rows[0].n === 0) {
     await client.query(readFileSync(new URL('../supabase/seed.sql', import.meta.url), 'utf8'));
     console.log('[migrate] seed data loaded');
+    await client.query(readFileSync(new URL('../supabase/schema.sql', import.meta.url), 'utf8')); // normalize seed into current columns
   } else {
     console.log(`[migrate] ${rows[0].n} managers already exist — seed skipped`);
   }

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { CalendarPlus, Plus } from 'lucide-react';
 import { useHub } from '@/lib/hub';
 import { EVENT_KIND, MONTHS_HE, fmtDate, gcalLink, todayISO } from '@/lib/labels';
-import { Avatar, Badge, Button, Card, Empty, PageHeader, Pills, ProjectLink } from '@/components/ui';
+import { Avatars, Badge, Button, Card, Empty, PageHeader, Pills, ProjectLink } from '@/components/ui';
 import { EVENT_FIELDS } from '@/components/forms';
 import { useEditor } from '@/components/useEditor';
 
@@ -103,7 +103,7 @@ export default function TimelinePage() {
                   <Badge cls={EVENT_KIND[e.kind].cls}>{EVENT_KIND[e.kind].label}</Badge>
                   <button className="flex-1 text-start text-sm text-stone-800 hover:underline min-w-[150px]" onClick={() => editor.open('events', EVENT_FIELDS, { ...e }, 'עריכה')}>{e.title}</button>
                   <ProjectLink id={e.project_id} plain />
-                  <Avatar id={e.owner_id} size={22} team={false} />
+                  <Avatars ids={e.owner_ids} size={22} team={false} />
                   <a href={gcalLink(e)} target="_blank" rel="noreferrer" title="הוספה ידנית ל-Google Calendar" className="text-stone-400 hover:text-indigo-600"><CalendarPlus size={16} /></a>
                 </li>
               );

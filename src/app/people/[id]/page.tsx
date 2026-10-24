@@ -15,18 +15,18 @@ export default function PersonPage() {
 
   const today = todayISO();
   const week = addDays(today, 7);
-  const mine = data.tasks.filter((t) => t.assignee_id === m.id);
+  const mine = data.tasks.filter((t) => t.assignee_ids?.includes(m.id));
   const open = sortTasks(mine.filter((t) => t.status !== 'done'));
   const overdue = open.filter((t) => t.due_date && t.due_date < today);
   const thisWeek = open.filter((t) => t.due_date && t.due_date >= today && t.due_date <= week);
   const later = open.filter((t) => !t.due_date || t.due_date > week);
   const doneRecent = mine.filter((t) => t.status === 'done' && t.completed_at && t.completed_at.slice(0, 10) >= addDays(today, -14))
     .sort((a, b) => ((a.completed_at ?? '') < (b.completed_at ?? '') ? 1 : -1));
-  const projectIds = new Set([...data.projects.filter((p) => p.owner_id === m.id).map((p) => p.id), ...open.map((t) => t.project_id).filter(Boolean) as string[]]);
-  const events = data.events.filter((e) => e.owner_id === m.id && (e.end_date ?? e.start_date) >= today).sort((a, b) => (a.start_date < b.start_date ? -1 : 1)).slice(0, 8);
-  const contacts = data.contacts.filter((c) => c.owner_id === m.id && c.status !== 'done');
+  const projectIds = new Set([...data.projects.filter((p) => p.owner_ids?.includes(m.id)).map((p) => p.id), ...open.map((t) => t.project_id).filter(Boolean) as string[]]);
+  const events = data.events.filter((e) => e.owner_ids?.includes(m.id) && (e.end_date ?? e.start_date) >= today).sort((a, b) => (a.start_date < b.start_date ? -1 : 1)).slice(0, 8);
+  const contacts = data.contacts.filter((c) => c.owner_ids?.includes(m.id) && c.status !== 'done');
   // team-wide tasks nobody owns, shown to everyone as "up for grabs"
-  const team = sortTasks(data.tasks.filter((t) => !t.assignee_id && t.status !== 'done' && !t.parent_id));
+  const team = sortTasks(data.tasks.filter((t) => !t.assignee_ids?.length && t.status !== 'done' && !t.parent_id));
 
   const group = (title: string, items: typeof open, cls?: string) => items.length ? (
     <div className="mb-3">
@@ -48,7 +48,7 @@ export default function PersonPage() {
 
       <div className="grid lg:grid-cols-5 gap-5">
         <Card title="משימות" className="lg:col-span-3">
-          <QuickAdd defaults={{ assignee_id: m.id }} placeholder={`משימה חדשה ל${m.name}…`} />
+          <QuickAdd defaults={{ assignee_ids: [m.id] }} placeholder={`משימה חדשה ל${m.name}…`} />
           {open.length === 0 && <Empty>אין משימות פתוחות</Empty>}
           {group('באיחור', overdue, 'text-red-600')}
           {group('השבוע', thisWeek, 'text-orange-600')}

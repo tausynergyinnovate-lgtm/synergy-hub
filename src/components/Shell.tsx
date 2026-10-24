@@ -72,7 +72,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     </Center>
   );
 
-  const openCount = (id: string) => data.tasks.filter((t) => t.assignee_id === id && t.status !== 'done').length;
+  const openCount = (id: string) => data.tasks.filter((t) => t.assignee_ids?.includes(id) && t.status !== 'done').length;
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
 
   const sidebar = (
@@ -132,7 +132,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <div className="lg:hidden"><Logo /></div>
             <div className="flex-1" />
             <button className="lg:hidden p-2 rounded-lg hover:bg-stone-100 text-stone-600" onClick={() => setSearchOpen(true)} aria-label="חיפוש"><Search size={19} /></button>
-            <Button className="hidden sm:inline-flex" onClick={() => openNewTask({ assignee_id: me?.id ?? null })}><Plus size={15} />משימה</Button>
+            <Button className="hidden sm:inline-flex" onClick={() => openNewTask({ assignee_ids: me ? [me.id] : [] })}><Plus size={15} />משימה</Button>
             <Button variant="primary" onClick={() => openAi()}><Sparkles size={15} /><span className="hidden sm:inline">עוזר AI</span></Button>
             {me && <Link href={`/people/${me.id}`} className="ms-1" aria-label="הלוח שלי"><Avatar id={me.id} size={30} /></Link>}
           </div>

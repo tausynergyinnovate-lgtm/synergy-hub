@@ -16,7 +16,7 @@ export default function TeamPage() {
   const [copied, setCopied] = useState(false);
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const ics = data.settings.ics_token ? `${origin}/api/ics?token=${data.settings.ics_token}` : '';
-  const openCount = (id: string) => data.tasks.filter((t) => t.assignee_id === id && t.status !== 'done').length;
+  const openCount = (id: string) => data.tasks.filter((t) => t.assignee_ids?.includes(id) && t.status !== 'done').length;
 
   const editManager = (row: Record<string, unknown>, title: string) => editor.open('managers', MANAGER_FIELDS, row, title, (r) => {
     // never let someone lock themselves out

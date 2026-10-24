@@ -33,7 +33,7 @@ export async function GET(req: Request) {
 
   const [{ data: events }, { data: tasks }, { data: projects }, { data: managers }] = await Promise.all([
     db.from('events').select('*'),
-    db.from('tasks').select('id,title,due_date,assignee_id,project_id,status,parent_id').not('due_date', 'is', null).neq('status', 'done').is('parent_id', null),
+    db.from('tasks').select('id,title,due_date,assignee_ids,project_id,status,parent_id').not('due_date', 'is', null).neq('status', 'done').is('parent_id', null),
     db.from('projects').select('id,name'),
     db.from('managers').select('id,name'),
   ]);
@@ -47,7 +47,7 @@ export async function GET(req: Request) {
     'X-WR-CALNAME:Synergy Hub', 'X-WR-TIMEZONE:Asia/Jerusalem', 'REFRESH-INTERVAL;VALUE=DURATION:PT6H',
   ];
   for (const e of events ?? []) {
-    const desc = [e.notes, pName(e.project_id) && `פרויקט: ${pName(e.project_id)}`, mName(e.owner_id) && `אחראי/ת: ${mName(e.owner_id)}`, origin + '/timeline'].filter(Boolean).join('\n');
+    const desc = [e.notes, pName(e.project_id) && `פרויקט: ${pName(e.project_id)}`, (e.owner_ids?.length ? `אחראים: ${e.owner_ids.map(mName).filter(Boolean).join(', ')}` : ''), origin + '/timeline'].filter(Boolean).join('\n');
     lines.push('BEGIN:VEVENT', `UID:event-${e.id}@synergy-hub`, `DTSTAMP:${stamp}`);
     if (e.start_time) {
       const t = String(e.start_time).slice(0, 5).replace(':', '') + '00';
@@ -60,7 +60,7 @@ export async function GET(req: Request) {
     lines.push('END:VEVENT');
   }
   for (const t of tasks ?? []) {
-    const who = mName(t.assignee_id) ?? 'צוות';
+    const who = (t.assignee_ids ?? []).map(mName).filter(Boolean).join(', ') || 'צוות';
     lines.push('BEGIN:VEVENT', `UID:task-${t.id}@synergy-hub`, `DTSTAMP:${stamp}`,
       `DTSTART;VALUE=DATE:${day(t.due_date)}`, `DTEND;VALUE=DATE:${nextDay(t.due_date)}`,
       `SUMMARY:${esc(`☐ ${t.title} (${who})`)}`,

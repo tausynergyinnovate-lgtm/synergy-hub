@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { Mail, Phone, Plus } from 'lucide-react';
 import { useHub } from '@/lib/hub';
 import { CONTACT_KIND, CONTACT_STATUS } from '@/lib/labels';
-import { Avatar, Badge, Button, Card, Empty, PageHeader, ProjectLink, selectCls } from '@/components/ui';
+import { Avatars, Badge, Button, Card, Empty, PageHeader, ProjectLink, selectCls } from '@/components/ui';
 import { CONTACT_FIELDS } from '@/components/forms';
 import { useEditor } from '@/components/useEditor';
 
@@ -58,7 +58,7 @@ function ContactsInner() {
               {c.email && <a href={`mailto:${c.email}`} onClick={(e) => e.stopPropagation()} className="text-stone-400 hover:text-indigo-600" title={c.email}><Mail size={15} /></a>}
               {c.phone && <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} className="text-stone-400 hover:text-indigo-600" title={c.phone}><Phone size={15} /></a>}
               <Badge cls={CONTACT_STATUS[c.status]?.cls}>{CONTACT_STATUS[c.status]?.label}</Badge>
-              <Avatar id={c.owner_id} size={22} team={false} />
+              <Avatars ids={c.owner_ids} size={22} team={false} />
             </li>
           ))}
         </ul>

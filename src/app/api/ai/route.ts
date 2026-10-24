@@ -26,9 +26,9 @@ export async function POST(req: Request) {
 
   const [managers, projects, tasks, events, contacts, decisions] = await Promise.all([
     db.from('managers').select('id,name,role,active').eq('active', true),
-    db.from('projects').select('id,name,description,owner_id,status,start_date,end_date'),
-    db.from('tasks').select('id,title,status,assignee_id,project_id,parent_id,due_date,priority').neq('status', 'done'),
-    db.from('events').select('id,title,kind,start_date,end_date,project_id,owner_id').gte('start_date', new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)),
+    db.from('projects').select('id,name,description,owner_ids,status,start_date,end_date'),
+    db.from('tasks').select('id,title,status,assignee_ids,project_id,parent_id,due_date,priority').neq('status', 'done'),
+    db.from('events').select('id,title,kind,start_date,end_date,project_id,owner_ids').gte('start_date', new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)),
     db.from('contacts').select('id,name,org,kind,status,topic,project_id'),
     db.from('decisions').select('id,title,status,project_id').eq('status', 'pending'),
   ]);
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
 כללים:
 - תמיד ענה דרך הכלי propose_changes. השדה reply בעברית, קצר וישיר.
 - משימות: קונקרטיות ובנות ביצוע ("לשלוח מייל הזמנה לד״ר X" ולא "לטפל בדובר"). עבודה עם כמה שלבים = משימת אב + תתי־משימות (parent_ref). אל תשכפל משימות פתוחות שכבר קיימות — אם משהו כבר קיים, הוסף לו תתי־משימות עם parent_ref = id של המשימה הקיימת.
-- שיוך אחראי: לפי תחומי האחריות (role) של המנהלים. אם המשתמש אמר "אני"/"עליי" — current_user_manager_id. אם לא ברור — null (כל הצוות) וציין זאת ב-reply.
+- שיוך אחראים (assignee_ids / owner_ids — מערך): לפי תחומי האחריות (role) של המנהלים. אפשר כמה אחראים למשימה כשזה באמת עבודה משותפת או כשהמשתמש ציין כמה אנשים. אם המשתמש אמר "אני"/"עליי" — current_user_manager_id. אם לא ברור — מערך ריק (כל הצוות) וציין זאת ב-reply.
 - פרויקט: שייך לפרויקט קיים מתאים (לפי שם ותיאור). אם focus_project_id קיים — ברירת המחדל היא הפרויקט הזה. צור new_project רק לעבודה רוחבית חדשה באמת.
 - תאריכים: YYYY-MM-DD, ביחס ל-today (${today}, יום ${weekday}). תזמן דדליינים לאחור מתאריך היעד (למשל פנייה לדובר 3–4 שבועות לפני, פוסט שיווקי שבוע לפני, תזכורת יום לפני, משוב עד 3 ימים אחרי). אל תמציא תאריך יעד שלא נאמר — אם חסר, שאל ב-reply ותן דדליינים יחסיים סבירים רק למה שתלוי בהווה.
 - אירוע עם תאריך (וובינר, מפגש, אירוע, פגישה) → גם ב-events.

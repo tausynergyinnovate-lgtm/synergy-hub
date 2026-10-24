@@ -6,7 +6,7 @@ import { Plus } from 'lucide-react';
 import { useHub } from '@/lib/hub';
 import { TASK_STATUS, dueLabel, todayISO } from '@/lib/labels';
 import type { Task, TaskStatus } from '@/lib/types';
-import { Avatar, Button, Card, PageHeader, Pills, ProjectLink, selectCls } from '@/components/ui';
+import { Avatars, Button, Card, PageHeader, Pills, ProjectLink, selectCls } from '@/components/ui';
 import { DoneToggle, TaskRow, TaskTree, sortTasks } from '@/components/tasks';
 
 type View = 'board' | 'list' | 'overdue';
@@ -22,7 +22,7 @@ function TasksInner() {
   useEffect(() => { const v = params.get('view'); if (v === 'overdue' || v === 'list' || v === 'board') setView(v); }, [params]);
 
   const filtered = useMemo(() => data.tasks.filter((t) =>
-    (!who || (who === 'team' ? !t.assignee_id : t.assignee_id === who)) &&
+    (!who || (who === 'team' ? !t.assignee_ids?.length : t.assignee_ids?.includes(who))) &&
     (!proj || (proj === 'none' ? !t.project_id : t.project_id === proj)) &&
     (!q || t.title.toLowerCase().includes(q.toLowerCase()))), [data.tasks, who, proj, q]);
 
@@ -32,7 +32,7 @@ function TasksInner() {
   return (
     <div>
       <PageHeader title="משימות" subtitle={`${data.tasks.filter((t) => t.status !== 'done').length} פתוחות`}
-        actions={<Button variant="primary" onClick={() => openNewTask({ assignee_id: who && who !== 'team' ? who : null, project_id: proj && proj !== 'none' ? proj : null })}><Plus size={15} />משימה חדשה</Button>} />
+        actions={<Button variant="primary" onClick={() => openNewTask({ assignee_ids: who && who !== 'team' ? [who] : [], project_id: proj && proj !== 'none' ? proj : null })}><Plus size={15} />משימה חדשה</Button>} />
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <Pills value={view} onChange={setView} options={[{ value: 'board', label: 'לוח' }, { value: 'list', label: 'לפי פרויקט' }, { value: 'overdue', label: 'באיחור' }]} />
@@ -65,7 +65,7 @@ function TasksInner() {
                   {col.map((t) => <BoardCard key={t.id} t={t} subs={subtasks(t.id)} onDrag={setDragId} onOpen={() => openTask(t.id)} />)}
                 </div>
                 {st === 'todo' && (
-                  <button onClick={() => openNewTask({ project_id: proj && proj !== 'none' ? proj : null, assignee_id: who && who !== 'team' ? who : null })}
+                  <button onClick={() => openNewTask({ project_id: proj && proj !== 'none' ? proj : null, assignee_ids: who && who !== 'team' ? [who] : [] })}
                     className="w-full mt-2 flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-800 px-2 py-1.5"><Plus size={14} />הוספה</button>
                 )}
               </div>
@@ -81,7 +81,7 @@ function TasksInner() {
             if (!ts.length && (who || q)) return null;
             return (
               <Card key={p?.id ?? 'none'} title={p ? <ProjectLink id={p.id} /> : 'ללא פרויקט'}>
-                <TaskTree tasks={ts} defaults={{ project_id: p?.id ?? null, assignee_id: who && who !== 'team' ? who : null }} showProject={false} />
+                <TaskTree tasks={ts} defaults={{ project_id: p?.id ?? null, assignee_ids: who && who !== 'team' ? [who] : [] }} showProject={false} />
               </Card>
             );
           })}
@@ -115,7 +115,7 @@ function BoardCard({ t, subs, onDrag, onOpen }: { t: Task; subs: Task[]; onDrag:
         {subs.length > 0 && <span className="tabular-nums">☐ {done}/{subs.length}</span>}
         <span className="flex-1" />
         {due && <span className={due.cls}>{due.text}</span>}
-        <Avatar id={t.assignee_id} size={22} />
+        <Avatars ids={t.assignee_ids} size={22} />
       </div>
     </div>
   );

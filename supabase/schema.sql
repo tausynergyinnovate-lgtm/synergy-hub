@@ -185,3 +185,15 @@ end $$;
 
 -- ───────── v2: receipt files (stored in the private "receipts" bucket) ─────────
 alter table public.expenses add column if not exists receipt_path text;
+
+-- ───────── v3: multiple owners / assignees ─────────
+alter table public.tasks    add column if not exists assignee_ids uuid[] not null default '{}';
+alter table public.projects add column if not exists owner_ids    uuid[] not null default '{}';
+alter table public.events   add column if not exists owner_ids    uuid[] not null default '{}';
+alter table public.contacts add column if not exists owner_ids    uuid[] not null default '{}';
+-- move any single-owner values into the arrays (old columns are then cleared and no longer used)
+update public.tasks    set assignee_ids = array[assignee_id], assignee_id = null where assignee_id is not null;
+update public.projects set owner_ids = array[owner_id], owner_id = null where owner_id is not null;
+update public.events   set owner_ids = array[owner_id], owner_id = null where owner_id is not null;
+update public.contacts set owner_ids = array[owner_id], owner_id = null where owner_id is not null;
+create index if not exists tasks_assignee_ids_idx on public.tasks using gin (assignee_ids);

@@ -4,7 +4,7 @@ import { Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useHub } from '@/lib/hub';
 import { PROJECT_STATUS, fmtDate } from '@/lib/labels';
-import { Avatar, Badge, Button, Card, PageHeader, Progress } from '@/components/ui';
+import { Avatars, Badge, Button, Card, PageHeader, Progress } from '@/components/ui';
 import { PROJECT_FIELDS, newSlug } from '@/components/forms';
 import { useEditor } from '@/components/useEditor';
 
@@ -43,7 +43,7 @@ export default function ProjectsPage() {
                     </div>
                     <div className="w-32"><Progress done={done} total={ts.length} color={p.color} /></div>
                     <Badge cls={PROJECT_STATUS[p.status].cls}>{PROJECT_STATUS[p.status].label}</Badge>
-                    <Avatar id={p.owner_id} size={26} />
+                    <Avatars ids={p.owner_ids} size={26} />
                   </Link>
                 );
               })}

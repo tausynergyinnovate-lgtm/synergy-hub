@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useHub } from '@/lib/hub';
 import { fmtDate, todayISO } from '@/lib/labels';
-import { Avatar, Empty, Progress } from './ui';
+import { Avatars, Empty, Progress } from './ui';
 
 export function ProjectGrid({ onlyIds }: { onlyIds?: Set<string> }) {
   const { data } = useHub();
@@ -22,7 +22,7 @@ export function ProjectGrid({ onlyIds }: { onlyIds?: Set<string> }) {
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.color ?? '#0ea5e9' }} />
               <span className="font-medium text-sm flex-1 truncate group-hover:underline">{p.name}</span>
-              <Avatar id={p.owner_id} size={22} />
+              <Avatars ids={p.owner_ids} size={22} />
             </div>
             <div className="mt-3"><Progress done={done} total={ts.length} color={p.color} /></div>
             <div className="mt-2 text-xs text-stone-500 truncate min-h-[16px]">

@@ -152,13 +152,13 @@ function PlanPreview({ plan: original, applied, onApplied }: { plan: AiPlan; app
 
   const apply = async () => {
     setBusy(true);
-    const validM = (id?: string | null) => (id && data.managers.some((m) => m.id === id) ? id : null);
+    const validM = (ids?: string[] | null) => (ids ?? []).filter((id) => data.managers.some((m) => m.id === id));
     let newPid: string | null = null;
     if (plan.new_project && on('np')) {
       const np = plan.new_project;
       const row = await save('projects', {
         slug: 'p-' + Math.random().toString(36).slice(2, 8), name: np.name, description: np.description ?? null,
-        owner_id: validM(np.owner_id), start_date: np.start_date ?? null, end_date: np.end_date ?? null, status: 'planning',
+        owner_ids: validM(np.owner_ids), start_date: np.start_date ?? null, end_date: np.end_date ?? null, status: 'planning',
         sort: data.projects.length + 1,
       });
       newPid = (row?.id as string) ?? null;
@@ -177,7 +177,7 @@ function PlanPreview({ plan: original, applied, onApplied }: { plan: AiPlan; app
         const parent = t.parent_ref ? (refToId[t.parent_ref] ?? (data.tasks.some((x) => x.id === t.parent_ref) ? t.parent_ref : null)) : null;
         const parentTask = parent ? data.tasks.find((x) => x.id === parent) : null;
         return {
-          title: t.title, notes: t.notes ?? null, assignee_id: validM(t.assignee_id),
+          title: t.title, notes: t.notes ?? null, assignee_ids: validM(t.assignee_ids),
           project_id: validP(t.project_id) ?? parentTask?.project_id ?? null,
           parent_id: parent, due_date: t.due_date || null, priority: t.priority ?? 'medium', sort: i,
         };
@@ -190,11 +190,11 @@ function PlanPreview({ plan: original, applied, onApplied }: { plan: AiPlan; app
     const n = { upd: 0, ev: 0, ct: 0, ex: 0, dc: 0 };
     for (const [i, u] of (plan.task_updates ?? []).entries()) {
       if (!on('u:' + i) || !data.tasks.some((t) => t.id === u.id)) continue;
-      const { id, ...patch } = u; await save('tasks', { id, ...patch }); n.upd++;
+      const { id, ...patch } = u; if (patch.assignee_ids) patch.assignee_ids = validM(patch.assignee_ids); await save('tasks', { id, ...patch }); n.upd++;
     }
-    const evs = (plan.events ?? []).filter((_, i) => on('e:' + i)).map((e) => ({ ...e, project_id: validP(e.project_id), owner_id: validM(e.owner_id), end_date: e.end_date || null }));
+    const evs = (plan.events ?? []).filter((_, i) => on('e:' + i)).map((e) => ({ ...e, project_id: validP(e.project_id), owner_ids: validM(e.owner_ids), end_date: e.end_date || null }));
     n.ev = (await saveMany('events', evs)).length;
-    const cts = (plan.contacts ?? []).filter((_, i) => on('c:' + i)).map((c) => ({ ...c, status: c.status ?? 'not_contacted', project_id: validP(c.project_id), owner_id: validM(c.owner_id) }));
+    const cts = (plan.contacts ?? []).filter((_, i) => on('c:' + i)).map((c) => ({ ...c, status: c.status ?? 'not_contacted', project_id: validP(c.project_id), owner_ids: validM(c.owner_ids) }));
     n.ct = (await saveMany('contacts', cts)).length;
     for (const [i, u] of (plan.contact_updates ?? []).entries()) {
       if (!on('cu:' + i) || !data.contacts.some((c) => c.id === u.id)) continue;
@@ -221,13 +221,19 @@ function PlanPreview({ plan: original, applied, onApplied }: { plan: AiPlan; app
         <div className="text-stone-800">{t.priority === 'high' && <span className="text-red-500">! </span>}{t.title}</div>
         <div className="flex flex-wrap items-center gap-1.5 mt-1 text-xs text-stone-500">
           {applied ? (
-            <>{manager(t.assignee_id)?.name ?? 'כל הצוות'}{t.due_date && <span>· {fmtDate(t.due_date)}</span>}</>
+            <>{(t.assignee_ids ?? []).map((id) => manager(id)?.name).filter(Boolean).join(', ') || 'כל הצוות'}{t.due_date && <span>· {fmtDate(t.due_date)}</span>}</>
           ) : (
             <>
-              <select className={sel} value={t.assignee_id ?? ''} onChange={(e) => setTask(t.ref, { assignee_id: e.target.value || null })}>
-                <option value="">כל הצוות</option>
-                {data.managers.filter((m) => m.active).map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-              </select>
+              <span className="inline-flex flex-wrap gap-1">
+                {data.managers.filter((m) => m.active).map((m) => {
+                  const on = (t.assignee_ids ?? []).includes(m.id);
+                  return (
+                    <button type="button" key={m.id} aria-pressed={on}
+                      onClick={() => setTask(t.ref, { assignee_ids: on ? (t.assignee_ids ?? []).filter((x) => x !== m.id) : [...(t.assignee_ids ?? []), m.id] })}
+                      className={`rounded-full border px-2 py-0.5 text-xs ${on ? 'border-indigo-300 bg-indigo-50 text-indigo-800' : 'border-stone-200 bg-white text-stone-400'}`}>{m.name}</button>
+                  );
+                })}
+              </span>
               <input type="date" className={sel} value={t.due_date ?? ''} onChange={(e) => setTask(t.ref, { due_date: e.target.value || null })} />
             </>
           )}
@@ -244,7 +250,7 @@ function PlanPreview({ plan: original, applied, onApplied }: { plan: AiPlan; app
       {tasks.length > 0 && <Section title="משימות">{roots.map((t) => renderTask(t, 0))}</Section>}
       {!!plan.task_updates?.length && <Section title="עדכוני משימות">{plan.task_updates.map((u, i) => {
         const t = data.tasks.find((x) => x.id === u.id);
-        return <Row key={i} active={on('u:' + i)} applied={!!applied} onToggle={() => toggle('u:' + i)}>{t?.title ?? 'משימה'} → {u.status === 'done' ? 'בוצע' : [u.status, u.due_date && fmtDate(u.due_date), u.assignee_id && manager(u.assignee_id)?.name, u.title].filter(Boolean).join(' · ')}</Row>;
+        return <Row key={i} active={on('u:' + i)} applied={!!applied} onToggle={() => toggle('u:' + i)}>{t?.title ?? 'משימה'} → {u.status === 'done' ? 'בוצע' : [u.status, u.due_date && fmtDate(u.due_date), u.assignee_ids?.length && u.assignee_ids.map((id) => manager(id)?.name).join(', '), u.title].filter(Boolean).join(' · ')}</Row>;
       })}</Section>}
       {!!plan.events?.length && <Section title="לוח זמנים">{plan.events.map((e, i) => (
         <Row key={i} active={on('e:' + i)} applied={!!applied} onToggle={() => toggle('e:' + i)}><Badge cls={EVENT_KIND[e.kind]?.cls}>{EVENT_KIND[e.kind]?.label}</Badge> {e.title} <span className="text-xs text-stone-500">· {fmtDate(e.start_date, true)}{e.end_date ? `–${fmtDate(e.end_date, true)}` : ''}</span></Row>
@@ -296,15 +302,15 @@ function demoPlan(d: { managers: { id: string; name: string }[]; projects: { id:
   return {
     reply: 'פירקתי את וובינר דצמבר למשימת אב עם 6 תתי־משימות, שובצו לפי תחומי האחריות. חסר תאריך סופי — הנחתי 15.12, אפשר לשנות לפני האישור.',
     tasks: [
-      { ref: 't1', title: 'וובינר דצמבר — AI ודאטה רפואי (ארז נעמן)', project_id: web, assignee_id: m('ניתאי'), due_date: '2026-12-15', priority: 'high' },
-      { ref: 't2', parent_ref: 't1', title: 'לשלוח לארז נעמן מייל הזמנה עם 3 תאריכים אפשריים', project_id: web, assignee_id: m('ניתאי'), due_date: '2026-11-03' },
-      { ref: 't3', parent_ref: 't1', title: 'לפתוח קישור זום ולהגדיר הקלטה', project_id: web, assignee_id: m('ניתאי'), due_date: '2026-12-01' },
-      { ref: 't4', parent_ref: 't1', title: 'פוסט + סטורי באינסטגרם', project_id: web, assignee_id: m('גאיה'), due_date: '2026-12-08' },
-      { ref: 't5', parent_ref: 't1', title: 'טופס הרשמה ותזכורת יום לפני', project_id: web, assignee_id: m('רעות'), due_date: '2026-12-14' },
-      { ref: 't6', parent_ref: 't1', title: 'שליחת טופס משוב למשתתפים', project_id: web, assignee_id: m('רעות'), due_date: '2026-12-17' },
-      { ref: 't7', parent_ref: 't1', title: 'מתנת תודה לדובר', project_id: web, assignee_id: m('גל'), due_date: '2026-12-15', priority: 'low' },
+      { ref: 't1', title: 'וובינר דצמבר — AI ודאטה רפואי (ארז נעמן)', project_id: web, assignee_ids: [m('ניתאי')].filter(Boolean) as string[], due_date: '2026-12-15', priority: 'high' },
+      { ref: 't2', parent_ref: 't1', title: 'לשלוח לארז נעמן מייל הזמנה עם 3 תאריכים אפשריים', project_id: web, assignee_ids: [m('ניתאי')].filter(Boolean) as string[], due_date: '2026-11-03' },
+      { ref: 't3', parent_ref: 't1', title: 'לפתוח קישור זום ולהגדיר הקלטה', project_id: web, assignee_ids: [m('ניתאי')].filter(Boolean) as string[], due_date: '2026-12-01' },
+      { ref: 't4', parent_ref: 't1', title: 'פוסט + סטורי באינסטגרם', project_id: web, assignee_ids: [m('גאיה')].filter(Boolean) as string[], due_date: '2026-12-08' },
+      { ref: 't5', parent_ref: 't1', title: 'טופס הרשמה ותזכורת יום לפני', project_id: web, assignee_ids: [m('רעות')].filter(Boolean) as string[], due_date: '2026-12-14' },
+      { ref: 't6', parent_ref: 't1', title: 'שליחת טופס משוב למשתתפים', project_id: web, assignee_ids: [m('רעות')].filter(Boolean) as string[], due_date: '2026-12-17' },
+      { ref: 't7', parent_ref: 't1', title: 'מתנת תודה לדובר', project_id: web, assignee_ids: [m('גל')].filter(Boolean) as string[], due_date: '2026-12-15', priority: 'low' },
     ],
-    events: [{ title: 'וובינר: AI ודאטה רפואי — ארז נעמן', kind: 'webinar', start_date: '2026-12-15', project_id: web, owner_id: m('ניתאי') }],
+    events: [{ title: 'וובינר: AI ודאטה רפואי — ארז נעמן', kind: 'webinar', start_date: '2026-12-15', project_id: web, owner_ids: [m('ניתאי')].filter(Boolean) as string[] }],
     contact_updates: erez ? [{ id: erez, status: 'contacted' }] : [],
     expenses: [{ title: 'מתנת תודה לדובר', amount: 150, project_id: web, status: 'planned', category: 'מתנות לדוברים' }],
   };

@@ -7,20 +7,20 @@ export interface Manager {
 }
 export interface Project {
   id: string; slug: string; name: string; description: string | null;
-  owner_id: string | null; status: 'planning' | 'active' | 'on_hold' | 'done';
+  owner_ids: string[]; status: 'planning' | 'active' | 'on_hold' | 'done';
   start_date: string | null; end_date: string | null; drive_url: string | null;
   color: string | null; sort: number | null;
 }
 export interface Task {
   id: string; title: string; notes: string | null; status: TaskStatus; priority: Priority;
-  due_date: string | null; assignee_id: string | null; project_id: string | null;
+  due_date: string | null; assignee_ids: string[]; project_id: string | null;
   parent_id: string | null; link_url: string | null; sort: number | null;
   completed_at: string | null; created_at: string;
 }
 export interface HubEvent {
   id: string; title: string; kind: 'phase' | 'event' | 'webinar' | 'meeting' | 'deadline';
   start_date: string; end_date: string | null; start_time: string | null; location: string | null;
-  project_id: string | null; owner_id: string | null; notes: string | null;
+  project_id: string | null; owner_ids: string[]; notes: string | null;
 }
 export interface Expense {
   id: string; title: string; amount: number; date: string | null; category: string | null;
@@ -29,7 +29,7 @@ export interface Expense {
 }
 export interface Contact {
   id: string; name: string; org: string | null; title: string | null; email: string | null; phone: string | null;
-  kind: string; status: string; topic: string | null; project_id: string | null; owner_id: string | null; notes: string | null;
+  kind: string; status: string; topic: string | null; project_id: string | null; owner_ids: string[]; notes: string | null;
 }
 export interface Meeting { id: string; title: string; date: string; notes: string | null; doc_url: string | null; }
 export interface Decision {

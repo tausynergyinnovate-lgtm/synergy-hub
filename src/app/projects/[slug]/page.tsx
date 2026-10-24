@@ -7,7 +7,7 @@ import { useHub } from '@/lib/hub';
 import {
   CONTACT_KIND, CONTACT_STATUS, DECISION_STATUS, EVENT_KIND, EXPENSE_STATUS, LINK_KIND, PROJECT_STATUS, fmtDate, ils, todayISO,
 } from '@/lib/labels';
-import { Avatar, Badge, Button, Card, Empty, PersonLink, Progress } from '@/components/ui';
+import { Avatar, Avatars, Badge, Button, Card, Empty, PeopleLinks, Progress } from '@/components/ui';
 import { TaskTree } from '@/components/tasks';
 import { openReceipt } from '@/components/Receipt';
 import { DriveFiles } from '@/components/DriveFiles';
@@ -35,7 +35,7 @@ export default function ProjectPage() {
   const decisions = data.decisions.filter((d) => d.project_id === p.id);
   const links = data.links.filter((l) => l.project_id === p.id);
   // people involved: owner + task assignees + event owners + contact owners
-  const peopleIds = Array.from(new Set([p.owner_id, ...tasks.map((t) => t.assignee_id), ...events.map((e) => e.owner_id), ...contacts.map((c) => c.owner_id)].filter(Boolean))) as string[];
+  const peopleIds = Array.from(new Set([...(p.owner_ids ?? []), ...tasks.flatMap((t) => t.assignee_ids ?? []), ...events.flatMap((e) => e.owner_ids ?? []), ...contacts.flatMap((c) => c.owner_ids ?? [])]));
 
   const addBtn = (onClick: () => void, label = 'הוספה') => (
     <button onClick={onClick} className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"><Plus size={13} />{label}</button>
@@ -53,7 +53,7 @@ export default function ProjectPage() {
               <h1 className="text-2xl font-bold text-stone-900 mt-0.5">{p.name}</h1>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-sm text-stone-600">
                 <Badge cls={PROJECT_STATUS[p.status].cls}>{PROJECT_STATUS[p.status].label}</Badge>
-                {p.owner_id ? <PersonLink id={p.owner_id} /> : <span className="text-stone-400">ללא אחראי</span>}
+                <PeopleLinks ids={p.owner_ids} emptyLabel="ללא אחראי" />
                 {p.start_date && <span className="text-stone-500">{fmtDate(p.start_date, true)}{p.end_date && p.end_date !== p.start_date ? ` – ${fmtDate(p.end_date, true)}` : ''}</span>}
                 {p.drive_url && <a href={p.drive_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-stone-600 hover:underline"><FolderOpen size={15} className="text-amber-500" />דרייב</a>}
               </div>
@@ -76,10 +76,10 @@ export default function ProjectPage() {
         {/* main column */}
         <div className="lg:col-span-3 space-y-5 min-w-0">
           <Card title="משימות ותתי־משימות" action={<span className="text-xs text-stone-400">לחיצה על משימה פותחת אותה · החץ פותח תתי־משימות</span>}>
-            <TaskTree tasks={tasks} defaults={{ project_id: p.id, assignee_id: p.owner_id }} showProject={false} emptyText="אין משימות פתוחות. הוסיפו כאן או בקשו מהעוזר לפרק את הפרויקט." />
+            <TaskTree tasks={tasks} defaults={{ project_id: p.id, assignee_ids: p.owner_ids ?? [] }} showProject={false} emptyText="אין משימות פתוחות. הוסיפו כאן או בקשו מהעוזר לפרק את הפרויקט." />
           </Card>
 
-          <Card title="לו״ז הפרויקט" action={addBtn(() => editor.open('events', EVENT_FIELDS, { kind: 'event', project_id: p.id, owner_id: p.owner_id }, 'אירוע / שלב חדש'))}>
+          <Card title="לו״ז הפרויקט" action={addBtn(() => editor.open('events', EVENT_FIELDS, { kind: 'event', project_id: p.id, owner_ids: p.owner_ids ?? [] }, 'אירוע / שלב חדש'))}>
             {events.length === 0 && <Empty>אין אירועים או שלבים</Empty>}
             <ol className="relative border-s-2 border-stone-100 ms-2 space-y-3">
               {events.map((e) => {
@@ -91,7 +91,7 @@ export default function ProjectPage() {
                     <div className="flex items-center gap-2 text-xs text-stone-500 mt-0.5">
                       <Badge cls={EVENT_KIND[e.kind].cls}>{EVENT_KIND[e.kind].label}</Badge>
                       {fmtDate(e.start_date, true)}{e.end_date ? ` – ${fmtDate(e.end_date, true)}` : ''}{e.start_time ? ` · ${e.start_time.slice(0, 5)}` : ''}
-                      {e.owner_id && <Avatar id={e.owner_id} size={18} />}
+                      <Avatars ids={e.owner_ids} size={18} team={false} />
                     </div>
                   </li>
                 );
@@ -114,7 +114,7 @@ export default function ProjectPage() {
               {peopleIds.map((id) => (
                 <Link key={id} href={`/people/${id}`} className="inline-flex items-center gap-1.5 rounded-full bg-stone-50 border border-stone-100 ps-1 pe-2.5 py-0.5 text-sm hover:bg-stone-100">
                   <Avatar id={id} size={22} />{manager(id)?.name}
-                  {id === p.owner_id && <span className="text-[10px] text-stone-400">אחראי/ת</span>}
+                  {p.owner_ids?.includes(id) && <span className="text-[10px] text-stone-400">אחראי/ת</span>}
                 </Link>
               ))}
             </div>
@@ -130,7 +130,7 @@ export default function ProjectPage() {
                     <span className="text-sm text-stone-800 flex-1 group-hover:underline">{c.name}{c.org && <span className="text-stone-400"> · {c.org}</span>}</span>
                     <Badge cls={CONTACT_STATUS[c.status]?.cls}>{CONTACT_STATUS[c.status]?.label}</Badge>
                   </div>
-                  <div className="text-xs text-stone-500 mt-0.5 flex items-center gap-1.5">{CONTACT_KIND[c.kind]}{c.topic && ` · ${c.topic}`}{c.owner_id && <Avatar id={c.owner_id} size={16} />}</div>
+                  <div className="text-xs text-stone-500 mt-0.5 flex items-center gap-1.5">{CONTACT_KIND[c.kind]}{c.topic && ` · ${c.topic}`}<Avatars ids={c.owner_ids} size={16} team={false} /></div>
                 </li>
               ))}
             </ul>

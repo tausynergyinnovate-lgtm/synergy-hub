@@ -6,7 +6,7 @@ import {
 export const PROJECT_FIELDS: Field[] = [
   { key: 'name', label: 'שם הפרויקט', type: 'text', required: true },
   { key: 'description', label: 'מטרה / תיאור', type: 'textarea' },
-  { key: 'owner_id', label: 'אחראי/ת', type: 'manager', emptyLabel: 'ללא אחראי' },
+  { key: 'owner_ids', label: 'אחראים', type: 'managers', emptyLabel: 'לא נבחרו אחראים' },
   { key: 'status', label: 'סטטוס', type: 'select', options: opts(PROJECT_STATUS) },
   { key: 'start_date', label: 'התחלה', type: 'date' },
   { key: 'end_date', label: 'סיום', type: 'date' },
@@ -22,7 +22,7 @@ export const EVENT_FIELDS: Field[] = [
   { key: 'start_time', label: 'שעה', type: 'time' },
   { key: 'location', label: 'מיקום / קישור זום', type: 'text' },
   { key: 'project_id', label: 'פרויקט', type: 'project' },
-  { key: 'owner_id', label: 'אחראי/ת', type: 'manager' },
+  { key: 'owner_ids', label: 'אחראים', type: 'managers' },
   { key: 'notes', label: 'הערות', type: 'textarea' },
 ];
 
@@ -49,7 +49,7 @@ export const CONTACT_FIELDS: Field[] = [
   { key: 'email', label: 'מייל', type: 'email' },
   { key: 'phone', label: 'טלפון', type: 'text' },
   { key: 'project_id', label: 'פרויקט', type: 'project' },
-  { key: 'owner_id', label: 'מי בקשר', type: 'manager', emptyLabel: 'לא נקבע' },
+  { key: 'owner_ids', label: 'מי בקשר', type: 'managers', emptyLabel: 'לא נקבע' },
   { key: 'notes', label: 'הערות', type: 'textarea' },
 ];
 
