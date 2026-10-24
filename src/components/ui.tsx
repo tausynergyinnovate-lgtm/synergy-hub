@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { X } from 'lucide-react';
 import { useHub } from '@/lib/hub';
+import { ReceiptInput } from './Receipt';
 
 export function Badge({ cls, children }: { cls?: string; children: React.ReactNode }) {
   return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${cls ?? 'bg-stone-100 text-stone-700'}`}>{children}</span>;
@@ -128,7 +129,8 @@ export type Field =
   | { key: string; label: string; type: 'select'; options: { value: string; label: string }[]; required?: boolean; allowEmpty?: string }
   | { key: string; label: string; type: 'manager'; emptyLabel?: string }
   | { key: string; label: string; type: 'project' }
-  | { key: string; label: string; type: 'checkbox' };
+  | { key: string; label: string; type: 'checkbox' }
+  | { key: string; label: string; type: 'receipt' };
 
 const inputCls = 'w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400';
 
@@ -159,6 +161,8 @@ export function FieldInput({ f, value, onChange }: { f: Field; value: unknown; o
           {data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
       );
+    case 'receipt':
+      return <ReceiptInput value={(value as string) || null} onChange={onChange} />;
     case 'checkbox':
       return <input type="checkbox" className="w-4 h-4 accent-indigo-600" checked={Boolean(value)} onChange={(e) => onChange(e.target.checked)} />;
     case 'number':

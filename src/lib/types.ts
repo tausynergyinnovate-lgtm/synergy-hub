@@ -24,7 +24,7 @@ export interface HubEvent {
 }
 export interface Expense {
   id: string; title: string; amount: number; date: string | null; category: string | null;
-  status: 'planned' | 'paid' | 'reimbursed'; paid_by: string | null; receipt_url: string | null;
+  status: 'planned' | 'paid' | 'reimbursed'; paid_by: string | null; receipt_url: string | null; receipt_path: string | null;
   project_id: string | null; notes: string | null;
 }
 export interface Contact {

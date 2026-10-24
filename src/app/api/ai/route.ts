@@ -1,17 +1,12 @@
-import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import { NextResponse } from 'next/server';
 import { PLAN_TOOL, type AiPlan } from '@/lib/aiPlan';
+import { callTool, simplifySchema } from '@/lib/aiGateway';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5';
-
 export async function POST(req: Request) {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: 'חסר ANTHROPIC_API_KEY במשתני הסביבה של Vercel.' }, { status: 500 });
-  }
   const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
   if (!token) return NextResponse.json({ error: 'לא מחובר' }, { status: 401 });
 
@@ -67,22 +62,15 @@ export async function POST(req: Request) {
 תמונת מצב של ההאב (JSON):
 ${JSON.stringify(snapshot)}`;
 
-  const anthropic = new Anthropic();
   const history = (body.history ?? []).slice(-8);
   try {
-    const res = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 6000,
-      system,
-      tools: [PLAN_TOOL as unknown as Anthropic.Tool],
-      tool_choice: { type: 'tool', name: 'propose_changes' },
-      messages: [...history.map((h) => ({ role: h.role, content: h.content })), { role: 'user', content: body.message }],
-    });
-    const block = res.content.find((b) => b.type === 'tool_use');
-    if (!block || block.type !== 'tool_use') return NextResponse.json({ error: 'לא התקבלה תוכנית מהעוזר' }, { status: 502 });
-    return NextResponse.json({ plan: block.input as AiPlan });
+    const { args, model } = await callTool<AiPlan>(
+      [{ role: 'system', content: system }, ...history.map((h) => ({ role: h.role, content: h.content })), { role: 'user', content: body.message }],
+      { name: PLAN_TOOL.name, description: PLAN_TOOL.description, parameters: simplifySchema(PLAN_TOOL.input_schema) as Record<string, unknown> },
+    );
+    return NextResponse.json({ plan: { ...args, reply: args.reply ?? '' }, model });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    return NextResponse.json({ error: 'שגיאה מול Claude: ' + msg }, { status: 502 });
+    return NextResponse.json({ error: msg }, { status: 502 });
   }
 }

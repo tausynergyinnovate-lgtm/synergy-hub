@@ -9,6 +9,7 @@ import {
 } from '@/lib/labels';
 import { Avatar, Badge, Button, Card, Empty, PersonLink, Progress } from '@/components/ui';
 import { TaskTree } from '@/components/tasks';
+import { openReceipt } from '@/components/Receipt';
 import { useEditor } from '@/components/useEditor';
 import {
   CONTACT_FIELDS, DECISION_FIELDS, EVENT_FIELDS, EXPENSE_FIELDS, LINK_FIELDS, PROJECT_FIELDS, driveFolderId,
@@ -142,6 +143,7 @@ export default function ProjectPage() {
               {expenses.map((x) => (
                 <li key={x.id} className="py-2 flex items-center gap-2 text-sm cursor-pointer hover:bg-stone-50 -mx-2 px-2 rounded-lg" onClick={() => editor.open('expenses', EXPENSE_FIELDS, { ...x }, 'עריכת הוצאה')}>
                   <span className="flex-1">{x.title}<span className="block text-xs text-stone-400">{x.category}{x.date && ` · ${fmtDate(x.date, true)}`}</span></span>
+                  {x.receipt_path && <button onClick={(e) => { e.stopPropagation(); openReceipt(x.receipt_path!); }} className="text-xs text-emerald-700 hover:underline">קבלה</button>}
                   <Badge cls={EXPENSE_STATUS[x.status].cls}>{EXPENSE_STATUS[x.status].label}</Badge>
                   <span className="tabular-nums font-medium w-20 text-start">{ils(Number(x.amount))}</span>
                 </li>

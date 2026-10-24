@@ -182,3 +182,6 @@ begin
     end;
   end loop;
 end $$;
+
+-- ───────── v2: receipt files (stored in the private "receipts" bucket) ─────────
+alter table public.expenses add column if not exists receipt_path text;

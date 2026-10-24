@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ExternalLink, Plus } from 'lucide-react';
+import { ExternalLink, Plus, Receipt as ReceiptIcon } from 'lucide-react';
+import { openReceipt } from '@/components/Receipt';
 import { useHub } from '@/lib/hub';
 import { EXPENSE_STATUS, fmtDate, ils, todayISO } from '@/lib/labels';
 import { Badge, Button, Card, Empty, PageHeader, ProjectLink, selectCls } from '@/components/ui';
@@ -28,11 +29,12 @@ export default function BudgetPage() {
       <PageHeader title="תקציב" subtitle="מעקב הוצאות לפי פרויקט"
         actions={<Button variant="primary" onClick={() => editor.open('expenses', EXPENSE_FIELDS, { status: 'planned', category: 'אחר', date: todayISO() }, 'הוצאה חדשה')}><Plus size={15} />הוצאה</Button>} />
 
-      <div className="grid grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         {[
           { label: 'שולם', value: ils(sum(paid)) },
           { label: 'מתוכנן', value: ils(sum(planned)) },
           { label: 'ממתין להחזר', value: ils(sum(toReimburse)), sub: toReimburse.length ? `${toReimburse.length} הוצאות` : '' },
+          { label: 'שולם בלי קבלה', value: String(paid.filter((x) => !x.receipt_path && !x.receipt_url).length), sub: '' },
         ].map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-stone-200/80 px-4 py-3">
             <div className="text-xl font-bold tabular-nums">{s.value}</div>
@@ -75,6 +77,7 @@ export default function BudgetPage() {
                 <span className="w-14 text-xs text-stone-500 tabular-nums">{fmtDate(x.date, true)}</span>
                 <span className="flex-1 min-w-[140px] text-sm">{x.title}<span className="block text-xs text-stone-400">{[x.category, x.paid_by && `שילם/ה: ${x.paid_by}`].filter(Boolean).join(' · ')}</span></span>
                 <ProjectLink id={x.project_id} plain />
+                {x.receipt_path && <button onClick={(e) => { e.stopPropagation(); openReceipt(x.receipt_path!); }} className="text-emerald-600 hover:text-emerald-800" title="צפייה בקבלה"><ReceiptIcon size={15} /></button>}
                 {x.receipt_url && <a href={x.receipt_url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-stone-400 hover:text-indigo-600" title="קבלה"><ExternalLink size={14} /></a>}
                 <Badge cls={EXPENSE_STATUS[x.status].cls}>{EXPENSE_STATUS[x.status].label}</Badge>
                 <span className="tabular-nums font-semibold w-20 text-start">{ils(Number(x.amount))}</span>
