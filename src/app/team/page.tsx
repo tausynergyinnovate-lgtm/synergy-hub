@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Copy, Plus, RefreshCw } from 'lucide-react';
 import { useHub } from '@/lib/hub';
 import { Avatar, Badge, Button, Card, PageHeader } from '@/components/ui';
@@ -14,6 +14,8 @@ export default function TeamPage() {
   const [cal, setCal] = useState(data.settings.calendar_id ?? '');
   const [drive, setDrive] = useState(data.settings.drive_root_url ?? '');
   const [copied, setCopied] = useState(false);
+  useEffect(() => { setCal(data.settings.calendar_id ?? ''); }, [data.settings.calendar_id]);
+  useEffect(() => { setDrive(data.settings.drive_root_url ?? ''); }, [data.settings.drive_root_url]);
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const ics = data.settings.ics_token ? `${origin}/api/ics?token=${data.settings.ics_token}` : '';
   const openCount = (id: string) => data.tasks.filter((t) => t.assignee_ids?.includes(id) && t.status !== 'done').length;
@@ -51,7 +53,7 @@ export default function TeamPage() {
       <Card title="לוח השנה של סינרגי">
         <label className="block text-xs font-medium text-stone-500 mb-1">מזהה הלוח (Calendar ID)</label>
         <div className="flex gap-2">
-          <input dir="ltr" className="flex-1 min-w-0 rounded-xl border border-stone-200 px-3 py-2 text-sm" value={cal} onChange={(e) => setCal(e.target.value)} placeholder="tausynergyinnovate@gmail.com" />
+          <input dir="ltr" className="flex-1 min-w-0 rounded-xl border border-stone-200 px-3 py-2 text-sm" value={cal} onChange={(e) => setCal(e.target.value)} placeholder="לדוגמה: name@gmail.com" />
           <Button onClick={() => setSetting('calendar_id', cal.trim())} disabled={cal === (data.settings.calendar_id ?? '')}>שמירה</Button>
         </div>
         <p className="text-xs text-stone-500 mt-1.5">ב-Google Calendar ← הגדרות הלוח ← ״שילוב הלוח״ ← Calendar ID. לוח ראשי של חשבון = כתובת המייל שלו. הלוח מוצג בהאב רק למי שהלוח משותף איתו.</p>
@@ -76,7 +78,7 @@ export default function TeamPage() {
       <Card title="דרייב וקישורים" action={<Button onClick={() => editor.open('links', LINK_FIELDS, { kind: 'drive', pinned: true }, 'קישור חדש')}><Plus size={14} />קישור</Button>}>
         <label className="block text-xs font-medium text-stone-500 mb-1">תיקיית השורש של סינרגי בדרייב</label>
         <div className="flex gap-2">
-          <input dir="ltr" className="flex-1 min-w-0 rounded-xl border border-stone-200 px-3 py-2 text-sm" value={drive} onChange={(e) => setDrive(e.target.value)} placeholder="https://drive.google.com/drive/folders/…" />
+          <input dir="ltr" className="flex-1 min-w-0 rounded-xl border border-stone-200 px-3 py-2 text-sm" value={drive} onChange={(e) => setDrive(e.target.value)} placeholder="לדוגמה: https://drive.google.com/drive/folders/…" />
           <Button onClick={() => setSetting('drive_root_url', drive.trim())} disabled={drive === (data.settings.drive_root_url ?? '')}>שמירה</Button>
         </div>
         <p className="text-xs text-stone-500 mt-1.5">תיקייה לכל פרויקט מגדירים בעמוד הפרויקט (״עריכה״).</p>
