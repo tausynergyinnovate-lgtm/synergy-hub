@@ -225,6 +225,17 @@ export function FieldInput({ f, value, onChange }: { f: Field; value: unknown; o
   }
 }
 
+const isEmpty = (x: unknown) => x === null || x === undefined || (typeof x === 'string' && !x.trim()) || (Array.isArray(x) && !x.length);
+
+/** Fill every select that has no empty option with its first value, so a NOT NULL column never receives null. */
+export function withSelectDefaults<T extends Record<string, unknown>>(fields: Field[], row: T): T {
+  const out: Record<string, unknown> = { ...row };
+  fields.forEach((f) => {
+    if (f.type === 'select' && f.allowEmpty === undefined && isEmpty(out[f.key]) && f.options.length) out[f.key] = f.options[0].value;
+  });
+  return out as T;
+}
+
 export function FormModal<T extends Record<string, unknown>>({
   open, onClose, title, fields, initial, onSubmit, onDelete,
 }: {
@@ -233,20 +244,35 @@ export function FormModal<T extends Record<string, unknown>>({
 }) {
   const [v, setV] = useState<T>(initial);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { if (open) setV(initial); }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
-  const missing = fields.some((f) => 'required' in f && f.required && !String(v[f.key] ?? '').trim());
+  const [tried, setTried] = useState(false);
+  useEffect(() => { if (open) { setV(withSelectDefaults(fields, initial)); setTried(false); } }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  const missing = fields.filter((f) => 'required' in f && f.required && isEmpty(v[f.key]));
+  const isMissing = (f: Field) => tried && missing.includes(f);
   return (
     <Modal open={open} onClose={onClose} title={title}>
-      <form className="space-y-3" onSubmit={async (e) => {
-        e.preventDefault(); if (missing) return;
-        setBusy(true); await onSubmit(v); setBusy(false); onClose();
+      <form className="space-y-3" noValidate onSubmit={async (e) => {
+        e.preventDefault();
+        if (missing.length) { setTried(true); return; }
+        setBusy(true);
+        const res = await onSubmit(v);
+        setBusy(false);
+        if (res !== null) onClose(); // null = save failed; keep what was typed
       }}>
         {fields.map((f) => (
           <label key={f.key} className={f.type === 'checkbox' ? 'flex items-center gap-2 text-sm' : 'block'}>
-            <span className={f.type === 'checkbox' ? 'text-stone-700' : 'block text-xs font-medium text-stone-500 mb-1'}>{f.label}{'required' in f && f.required && <span className="text-red-500"> *</span>}</span>
-            <FieldInput f={f} value={v[f.key]} onChange={(x) => setV((s) => ({ ...s, [f.key]: x }))} />
+            <span className={f.type === 'checkbox' ? 'text-stone-700' : 'block text-xs font-medium text-stone-500 mb-1'}>
+              {f.label}{'required' in f && f.required && <span className="text-red-500"> *</span>}
+            </span>
+            {f.type === 'checkbox'
+              ? <FieldInput f={f} value={v[f.key]} onChange={(x) => setV((s) => ({ ...s, [f.key]: x }))} />
+              : <div className={isMissing(f) ? 'rounded-xl ring-2 ring-red-300' : undefined}>
+                  <FieldInput f={f} value={v[f.key]} onChange={(x) => setV((s) => ({ ...s, [f.key]: x }))} />
+                </div>}
           </label>
         ))}
+        {tried && missing.length > 0 && (
+          <div className="text-sm text-red-600">חסר: {missing.map((f) => f.label).join(', ')}</div>
+        )}
         <div className="flex items-center justify-between pt-2">
           {onDelete ? (
             <Button type="button" variant="danger" onClick={async () => {
@@ -255,7 +281,7 @@ export function FormModal<T extends Record<string, unknown>>({
           ) : <span />}
           <div className="flex gap-2">
             <Button type="button" onClick={onClose}>ביטול</Button>
-            <Button type="submit" variant="primary" disabled={busy || missing}>שמירה</Button>
+            <Button type="submit" variant="primary" disabled={busy}>{busy ? 'שומר…' : 'שמירה'}</Button>
           </div>
         </div>
       </form>

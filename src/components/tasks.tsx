@@ -144,6 +144,9 @@ export function TaskModal() {
   const subs = existing ? subtasks(existing.id) : [];
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
+  const [tried, setTried] = useState(false);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { setTried(false); }, [taskModal]);
   useEffect(() => { setTitle(t.title ?? ''); setNotes(t.notes ?? ''); }, [existing?.id, isNew]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const parentOptions = useMemo(() => data.tasks.filter((x) => !x.parent_id && x.id !== existing?.id && (!t.project_id || x.project_id === t.project_id)), [data.tasks, existing?.id, t.project_id]);
@@ -158,12 +161,13 @@ export function TaskModal() {
     }>
       <div className="flex items-start gap-3">
         {existing && <div className="pt-2"><DoneToggle task={existing} size={22} /></div>}
-        <textarea value={title} rows={1} autoFocus={isNew}
+        <textarea value={title} rows={1} autoFocus={isNew} aria-label="כותרת המשימה"
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => existing && title.trim() && title !== existing.title && set('title', title.trim())}
           placeholder="מה צריך לעשות?"
-          className="flex-1 text-lg font-semibold text-stone-900 resize-none focus:outline-none py-1 [field-sizing:content]" />
+          className={`flex-1 text-lg font-semibold text-stone-900 resize-none focus:outline-none py-1 [field-sizing:content] ${isNew ? `rounded-xl border px-3 py-2 ${tried && !title.trim() ? 'border-red-400 ring-2 ring-red-200' : 'border-stone-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200'}` : ''}`} />
       </div>
+      {isNew && <div className={`text-xs mt-1 ${tried && !title.trim() ? 'text-red-600' : 'text-stone-400'}`}>{tried && !title.trim() ? 'חסרה כותרת. ' : ''}רק הכותרת חובה, את כל השאר אפשר למלא גם אחר כך.</div>}
 
       <div className="grid grid-cols-2 gap-3 mt-3">
         {TASK_FIELDS.map((f) => (
@@ -221,9 +225,13 @@ export function TaskModal() {
           }}><Trash2 size={15} />מחיקה</Button>
         ) : <span />}
         {isNew ? (
-          <Button variant="primary" disabled={!title.trim()} onClick={async () => {
-            await save('tasks', { ...draft, title: title.trim(), notes: notes || null }); close();
-          }}>הוספה</Button>
+          <Button variant="primary" disabled={busy} onClick={async () => {
+            if (!title.trim()) { setTried(true); return; }
+            setBusy(true);
+            const res = await save('tasks', { status: 'todo', priority: 'medium', ...draft, title: title.trim(), notes: notes || null });
+            setBusy(false);
+            if (res) close();
+          }}>{busy ? 'מוסיף…' : 'הוספה'}</Button>
         ) : <Button onClick={close}>סגירה</Button>}
       </div>
     </Modal>

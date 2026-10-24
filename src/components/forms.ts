@@ -70,8 +70,8 @@ export const DECISION_FIELDS: Field[] = [
 ];
 
 export const LINK_FIELDS: Field[] = [
-  { key: 'title', label: 'שם', type: 'text', required: true },
   { key: 'url', label: 'כתובת', type: 'url', required: true },
+  { key: 'title', label: 'שם (אם ריק — לפי הכתובת)', type: 'text' },
   { key: 'kind', label: 'סוג', type: 'select', options: opts(LINK_KIND) },
   { key: 'project_id', label: 'פרויקט', type: 'project' },
   { key: 'pinned', label: 'להציג בקישורים המהירים בדף הבית', type: 'checkbox' },

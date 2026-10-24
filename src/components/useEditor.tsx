@@ -28,7 +28,11 @@ export function useEditor() {
         const r = clean(state.transform ? state.transform(v) : v);
         // amount is optional in the form but NOT NULL in the DB — an empty amount is stored as 0 and filled in later
         if (state.table === 'expenses' && r.amount == null) r.amount = 0;
-        await save(state.table, r);
+        // a link only needs its URL — the name defaults to the site's address
+        if (state.table === 'links' && !r.title && typeof r.url === 'string') {
+          try { r.title = new URL(r.url).hostname.replace(/^www\./, ''); } catch { r.title = r.url; }
+        }
+        return save(state.table, r);
       }}
       onDelete={state?.row.id ? async () => { if (state?.row.id) await remove(state.table, state.row.id); } : undefined}
     />

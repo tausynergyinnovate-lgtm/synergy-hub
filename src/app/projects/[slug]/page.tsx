@@ -79,7 +79,7 @@ export default function ProjectPage() {
             <TaskTree tasks={tasks} defaults={{ project_id: p.id, assignee_ids: p.owner_ids ?? [] }} showProject={false} emptyText="אין משימות פתוחות. הוסיפו כאן או בקשו מהעוזר לפרק את הפרויקט." />
           </Card>
 
-          <Card title="לו״ז הפרויקט" action={addBtn(() => editor.open('events', EVENT_FIELDS, { kind: 'event', project_id: p.id, owner_ids: p.owner_ids ?? [] }, 'אירוע / שלב חדש'))}>
+          <Card title="לו״ז הפרויקט" action={addBtn(() => editor.open('events', EVENT_FIELDS, { kind: 'event', start_date: today, project_id: p.id, owner_ids: p.owner_ids ?? [] }, 'אירוע / שלב חדש'))}>
             {events.length === 0 && <Empty>אין אירועים או שלבים</Empty>}
             <ol className="relative border-s-2 border-stone-100 ms-2 space-y-3">
               {events.map((e) => {
