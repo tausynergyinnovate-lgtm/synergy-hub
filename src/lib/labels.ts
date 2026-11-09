@@ -5,7 +5,7 @@ export const TASK_STATUS: Record<string, { label: string; cls: string }> = {
   done: { label: 'בוצע', cls: 'bg-emerald-50 text-emerald-700' },
 };
 export const PRIORITY: Record<string, { label: string; cls: string }> = {
-  high: { label: 'גבוהה', cls: 'text-red-600' },
+  high: { label: 'גבוהה', cls: 'text-signal' },
   medium: { label: 'רגילה', cls: 'text-stone-500' },
   low: { label: 'נמוכה', cls: 'text-stone-400' },
 };
@@ -70,7 +70,7 @@ export function fmtDate(iso: string | null | undefined, withYear = false): strin
 export function dueLabel(iso: string | null): { text: string; cls: string } | null {
   if (!iso) return null;
   const n = daysBetween(todayISO(), iso);
-  if (n < 0) return { text: `באיחור ${-n} ימים`, cls: 'text-red-600 font-medium' };
+  if (n < 0) return { text: `באיחור ${-n} ימים`, cls: 'text-signal font-medium' };
   if (n === 0) return { text: 'היום', cls: 'text-orange-600 font-medium' };
   if (n === 1) return { text: 'מחר', cls: 'text-orange-600' };
   if (n <= 7) return { text: `בעוד ${n} ימים`, cls: 'text-stone-700' };

@@ -104,7 +104,7 @@ export default function TimelinePage() {
                   <button className="flex-1 text-start text-sm text-stone-800 hover:underline min-w-[150px]" onClick={() => editor.open('events', EVENT_FIELDS, { ...e }, 'עריכה')}>{e.title}</button>
                   <ProjectLink id={e.project_id} plain />
                   <Avatars ids={e.owner_ids} size={22} team={false} />
-                  <a href={gcalLink(e)} target="_blank" rel="noreferrer" title="הוספה ידנית ל-Google Calendar" className="text-stone-400 hover:text-indigo-600"><CalendarPlus size={16} /></a>
+                  <a href={gcalLink(e)} target="_blank" rel="noreferrer" title="הוספה ידנית ל-Google Calendar" className="text-stone-400 hover:text-link"><CalendarPlus size={16} /></a>
                 </li>
               );
             })}
@@ -118,7 +118,7 @@ export default function TimelinePage() {
             <iframe title="Synergy calendar" className="w-full h-[70vh] rounded-xl border border-stone-100"
               src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calId)}&ctz=Asia%2FJerusalem&hl=iw&mode=MONTH&showTitle=0&showPrint=0`} />
           ) : (
-            <Empty>עוד לא הוגדר לוח. מגדירים את מזהה הלוח של סינרגי ב<Link href="/team" className="text-indigo-600 underline">צוות והגדרות</Link>.</Empty>
+            <Empty>עוד לא הוגדר לוח. מגדירים את מזהה הלוח של סינרגי ב<Link href="/team" className="text-link underline">צוות והגדרות</Link>.</Empty>
           )}
         </Card>
       )}

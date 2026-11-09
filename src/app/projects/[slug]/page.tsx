@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ExternalLink, FolderOpen, Pencil, Plus, Sparkles } from 'lucide-react';
+import { ExternalLink, FolderOpen, Pencil, Plus, Sparkles, ChevronRight } from 'lucide-react';
 import { useHub } from '@/lib/hub';
 import {
   CONTACT_KIND, CONTACT_STATUS, DECISION_STATUS, EVENT_KIND, EXPENSE_STATUS, LINK_KIND, PROJECT_STATUS, fmtDate, ils, todayISO,
@@ -21,7 +21,7 @@ export default function ProjectPage() {
   const { data, openAi, manager } = useHub();
   const editor = useEditor();
   const p = data.projects.find((x) => x.slug === decodeURIComponent(slug));
-  if (!p) return <div className="text-stone-500 py-10 text-center">הפרויקט לא נמצא. <Link className="text-indigo-600 underline" href="/projects">לכל הפרויקטים</Link></div>;
+  if (!p) return <div className="text-stone-500 py-10 text-center">הפרויקט לא נמצא. <Link className="text-link underline" href="/projects">לכל הפרויקטים</Link></div>;
 
   const today = todayISO();
   const tasks = data.tasks.filter((t) => t.project_id === p.id);
@@ -38,19 +38,19 @@ export default function ProjectPage() {
   const peopleIds = Array.from(new Set([...(p.owner_ids ?? []), ...tasks.flatMap((t) => t.assignee_ids ?? []), ...events.flatMap((e) => e.owner_ids ?? []), ...contacts.flatMap((c) => c.owner_ids ?? [])]));
 
   const addBtn = (onClick: () => void, label = 'הוספה') => (
-    <button onClick={onClick} className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"><Plus size={13} />{label}</button>
+    <button onClick={onClick} className="inline-flex items-center gap-1 text-sm text-link hover:underline min-h-tap px-1"><Plus size={16} />{label}</button>
   );
 
   return (
     <div className="space-y-5">
       {/* header */}
-      <div className="rounded-3xl border border-stone-200 bg-white overflow-hidden">
+      <div className="rounded-3xl bg-surface overflow-hidden">
         <div className="h-1.5" style={{ background: p.color ?? '#0ea5e9' }} />
         <div className="p-5">
           <div className="flex flex-wrap items-start gap-3">
             <div className="flex-1 min-w-[220px]">
-              <Link href="/projects" className="text-xs text-stone-400 hover:underline">פרויקטים</Link>
-              <h1 className="text-2xl font-bold text-stone-900 mt-0.5">{p.name}</h1>
+              <Link href="/projects" className="inline-flex items-center gap-0.5 text-sm text-link hover:underline py-1"><ChevronRight size={16} aria-hidden />פרויקטים</Link>
+              <h1 className="text-[1.875rem] leading-tight font-bold tracking-tight text-stone-900 mt-0.5">{p.name}</h1>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-sm text-stone-600">
                 <Badge cls={PROJECT_STATUS[p.status].cls}>{PROJECT_STATUS[p.status].label}</Badge>
                 <PeopleLinks ids={p.owner_ids} emptyLabel="ללא אחראי" />
@@ -66,7 +66,7 @@ export default function ProjectPage() {
           {p.description && <p className="text-sm text-stone-600 mt-3 whitespace-pre-wrap">{p.description}</p>}
           <div className="grid grid-cols-3 gap-4 mt-4 max-w-xl">
             <div><div className="text-xs text-stone-500 mb-1">התקדמות</div><Progress done={done} total={tasks.length} color={p.color} /></div>
-            <div><div className="text-xs text-stone-500">באיחור</div><div className={`font-semibold tabular-nums ${late ? 'text-red-600' : ''}`}>{late}</div></div>
+            <div><div className="text-xs text-stone-500">באיחור</div><div className={`font-semibold tabular-nums ${late ? 'text-signal' : ''}`}>{late}</div></div>
             <div><div className="text-xs text-stone-500">הוצא{planned ? ' / מתוכנן' : ''}</div><div className="font-semibold tabular-nums">{ils(spent)}{planned ? <span className="text-stone-400 font-normal"> / {ils(planned)}</span> : ''}</div></div>
           </div>
         </div>
@@ -86,7 +86,7 @@ export default function ProjectPage() {
                 const past = (e.end_date ?? e.start_date) < today;
                 return (
                   <li key={e.id} className="ps-4 relative cursor-pointer group" onClick={() => editor.open('events', EVENT_FIELDS, { ...e }, 'עריכת אירוע')}>
-                    <span className={`absolute -start-[7px] top-1.5 w-3 h-3 rounded-full border-2 border-white ${past ? 'bg-stone-300' : ''}`} style={past ? {} : { background: p.color ?? '#0ea5e9' }} />
+                    <span className={`absolute -start-[7px] top-1.5 w-3 h-3 rounded-full border-2 border-surface ${past ? 'bg-stone-300' : ''}`} style={past ? {} : { background: p.color ?? '#0ea5e9' }} />
                     <div className={`text-sm ${past ? 'text-stone-400' : 'text-stone-800'} group-hover:underline`}>{e.title}</div>
                     <div className="flex items-center gap-2 text-xs text-stone-500 mt-0.5">
                       <Badge cls={EVENT_KIND[e.kind].cls}>{EVENT_KIND[e.kind].label}</Badge>
@@ -100,7 +100,7 @@ export default function ProjectPage() {
           </Card>
 
           {p.drive_url && (
-            <Card title="קבצים בדרייב" action={<a href={p.drive_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-indigo-600 hover:underline"><ExternalLink size={12} />פתיחה בדרייב</a>}>
+            <Card title="קבצים בדרייב" action={<a href={p.drive_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-link hover:underline"><ExternalLink size={12} />פתיחה בדרייב</a>}>
               <DriveFiles folderUrl={p.drive_url} />
             </Card>
           )}
@@ -112,9 +112,9 @@ export default function ProjectPage() {
             <div className="flex flex-wrap gap-2 mb-3">
               {peopleIds.length === 0 && <span className="text-sm text-stone-400">עוד לא שויכו מנהלים</span>}
               {peopleIds.map((id) => (
-                <Link key={id} href={`/people/${id}`} className="inline-flex items-center gap-1.5 rounded-full bg-stone-50 border border-stone-100 ps-1 pe-2.5 py-0.5 text-sm hover:bg-stone-100">
+                <Link key={id} href={`/people/${id}`} className="inline-flex items-center gap-1.5 rounded-full bg-stone-100 ps-1 pe-2.5 py-0.5 text-sm hover:bg-stone-100">
                   <Avatar id={id} size={22} />{manager(id)?.name}
-                  {p.owner_ids?.includes(id) && <span className="text-[10px] text-stone-400">אחראי/ת</span>}
+                  {p.owner_ids?.includes(id) && <span className="text-[0.6875rem] text-stone-400">אחראי/ת</span>}
                 </Link>
               ))}
             </div>
@@ -140,7 +140,7 @@ export default function ProjectPage() {
             {expenses.length === 0 && <Empty>אין הוצאות</Empty>}
             <ul className="divide-y divide-stone-100">
               {expenses.map((x) => (
-                <li key={x.id} className="py-2 flex items-center gap-2 text-sm cursor-pointer hover:bg-stone-50 -mx-2 px-2 rounded-lg" onClick={() => editor.open('expenses', EXPENSE_FIELDS, { ...x }, 'עריכת הוצאה')}>
+                <li key={x.id} className="py-2 flex items-center gap-2 text-sm cursor-pointer hover:bg-stone-100 -mx-2 px-2 rounded-lg" onClick={() => editor.open('expenses', EXPENSE_FIELDS, { ...x }, 'עריכת הוצאה')}>
                   <span className="flex-1">{x.title}<span className="block text-xs text-stone-400">{x.category}{x.date && ` · ${fmtDate(x.date, true)}`}</span></span>
                   {x.receipt_path && <button onClick={(e) => { e.stopPropagation(); openReceipt(x.receipt_path!); }} className="text-xs text-emerald-700 hover:underline">קבלה</button>}
                   <Badge cls={EXPENSE_STATUS[x.status].cls}>{EXPENSE_STATUS[x.status].label}</Badge>

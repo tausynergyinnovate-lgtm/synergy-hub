@@ -40,7 +40,7 @@ export function SearchDialog() {
 
   return (
     <Modal open={searchOpen} onClose={() => { setSearchOpen(false); setQ(''); }} title="חיפוש">
-      <div className="flex items-center gap-2 rounded-xl border border-stone-200 px-3 py-2 focus-within:ring-2 focus-within:ring-indigo-200">
+      <div className="flex items-center gap-2 rounded-xl bg-stone-100 px-3 min-h-tap focus-within:ring-2 focus-within:ring-indigo-200">
         <Search size={16} className="text-stone-400" />
         <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="פרויקט, משימה, איש קשר, אירוע…"
           className="flex-1 text-sm focus:outline-none bg-transparent"
@@ -49,7 +49,7 @@ export function SearchDialog() {
       <div className="mt-3 max-h-[60vh] overflow-y-auto">
         {q && hits.length === 0 && <p className="text-sm text-stone-400 p-2">לא נמצא כלום</p>}
         {hits.map(({ key, icon: Icon, title, sub, go }) => (
-          <button key={key} onClick={() => { go(); setQ(''); }} className="w-full flex items-center gap-3 text-start rounded-xl px-2 py-2 hover:bg-stone-50">
+          <button key={key} onClick={() => { go(); setQ(''); }} className="w-full flex items-center gap-3 text-start rounded-xl px-2 py-2 hover:bg-stone-100">
             <Icon size={16} className="text-stone-400 shrink-0" />
             <span className="min-w-0">
               <span className="block text-sm text-stone-800 truncate">{title}</span>

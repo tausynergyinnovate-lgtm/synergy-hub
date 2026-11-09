@@ -40,7 +40,7 @@ export default function PersonPage() {
       <div className="flex items-center gap-4">
         <Avatar id={m.id} size={56} />
         <div>
-          <h1 className="text-2xl font-bold">{me?.id === m.id ? 'הלוח שלי' : `הלוח של ${m.name}`}</h1>
+          <h1 className="text-[1.875rem] leading-tight font-bold tracking-tight">{me?.id === m.id ? 'הלוח שלי' : `הלוח של ${m.name}`}</h1>
           <p className="text-sm text-stone-500">{m.role}</p>
           <p className="text-xs text-stone-400 mt-0.5">{open.length} פתוחות{overdue.length ? ` · ${overdue.length} באיחור` : ''} · {doneRecent.length} הושלמו בשבועיים האחרונים</p>
         </div>
@@ -50,7 +50,7 @@ export default function PersonPage() {
         <Card title="משימות" className="lg:col-span-3">
           <QuickAdd defaults={{ assignee_ids: [m.id] }} placeholder={`משימה חדשה ל${m.name}…`} />
           {open.length === 0 && <Empty>אין משימות פתוחות</Empty>}
-          {group('באיחור', overdue, 'text-red-600')}
+          {group('באיחור', overdue, 'text-signal')}
           {group('השבוע', thisWeek, 'text-orange-600')}
           {group('בהמשך', later)}
           {group('הושלם לאחרונה', doneRecent, 'text-emerald-600')}

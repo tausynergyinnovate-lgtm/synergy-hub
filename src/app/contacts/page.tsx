@@ -49,14 +49,14 @@ function ContactsInner() {
         <ul className="divide-y divide-stone-100">
           {list.map((c) => (
             <li key={c.id} onClick={() => editor.open('contacts', CONTACT_FIELDS, { ...c }, c.name)}
-              className="py-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 cursor-pointer hover:bg-stone-50 -mx-2 px-2 rounded-lg">
+              className="py-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 cursor-pointer hover:bg-stone-100 -mx-2 px-2 rounded-lg">
               <div className="flex-1 min-w-[180px]">
                 <div className="text-sm font-medium text-stone-800">{c.name}{c.org && <span className="font-normal text-stone-500"> · {c.org}</span>}</div>
                 <div className="text-xs text-stone-500 mt-0.5">{CONTACT_KIND[c.kind]}{c.title && ` · ${c.title}`}{c.topic && ` · ${c.topic}`}</div>
               </div>
               <ProjectLink id={c.project_id} plain />
-              {c.email && <a href={`mailto:${c.email}`} onClick={(e) => e.stopPropagation()} className="text-stone-400 hover:text-indigo-600" title={c.email}><Mail size={15} /></a>}
-              {c.phone && <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} className="text-stone-400 hover:text-indigo-600" title={c.phone}><Phone size={15} /></a>}
+              {c.email && <a href={`mailto:${c.email}`} onClick={(e) => e.stopPropagation()} className="text-stone-400 hover:text-link" title={c.email}><Mail size={15} /></a>}
+              {c.phone && <a href={`tel:${c.phone}`} onClick={(e) => e.stopPropagation()} className="text-stone-400 hover:text-link" title={c.phone}><Phone size={15} /></a>}
               <Badge cls={CONTACT_STATUS[c.status]?.cls}>{CONTACT_STATUS[c.status]?.label}</Badge>
               <Avatars ids={c.owner_ids} size={22} team={false} />
             </li>

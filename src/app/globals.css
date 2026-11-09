@@ -1,14 +1,110 @@
+@import './palette.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html { -webkit-text-size-adjust: 100%; }
-body {
-  background: #fafaf9;
-  color: #1c1917;
-  font-family: 'Rubik', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
+/* ───────── Semantic tokens ─────────
+   canvas   grouped background        light #F2F2F7  dark #000000
+   surface  cards, sheets, inputs     light #FFFFFF  dark #1C1C1E
+   accent   prominent button fill     light #4F46E5  dark #5856E0  (white label 6.3:1 / 5.5:1)
+   link     tinted text, selected tab light #4F46E5  dark #A5A6FF  (6.3:1 on white / 7.6:1 on #1C1C1E)
+   signal   overdue, destructive      light #C8102E  dark #FF6B6B  (5.9:1 / 6.1:1)            */
+:root {
+  --canvas: 242 242 247;
+  --surface: 255 255 255;
+  --accent: 79 70 229;
+  --accent-hover: 67 56 202;
+  --link: 79 70 229;
+  --signal: 200 16 46;
+  --glass: 250 250 252;
+  --glass-edge: 255 255 255;
+  --glass-alpha: 0.72;
+  --glass-edge-alpha: 0.7;
+  --shadow: 0 0 0;
+  --font-display: 'Rubik', var(--font-ui);
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Hebrew', 'Segoe UI', system-ui, 'Noto Sans Hebrew', Arial, sans-serif;
+  --tap: 44px;
+  color-scheme: light dark;
 }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: 0 0 0;
+    --surface: 28 28 30;
+    --accent: 88 86 224;
+    --accent-hover: 104 102 236;
+    --link: 165 166 255;
+    --signal: 255 107 107;
+    --glass: 30 30 32;
+    --glass-edge: 255 255 255;
+    --glass-alpha: 0.66;
+    --glass-edge-alpha: 0.1;
+  }
+}
+@media (prefers-contrast: more) {
+  :root { --link: 55 48 163; --signal: 160 0 30; --glass-alpha: 0.95; }
+}
+@media (prefers-contrast: more) and (prefers-color-scheme: dark) {
+  :root { --link: 199 200 255; --signal: 255 140 140; }
+}
+@media (min-width: 1024px) {
+  :root { --tap: 36px; }
+}
+
+/* Type follows the person's browser text size (rem), 17px body on phones as Apple recommends */
+html { -webkit-text-size-adjust: 100%; font-size: 100%; }
+@media (max-width: 639px) { html { font-size: 106.25%; } }
+body {
+  background: rgb(var(--canvas));
+  color: rgb(var(--stone-900));
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+h1, h2, .font-display { font-family: var(--font-display); }
 input[type='date'], input[type='time'] { direction: rtl; }
 .tabular-nums { font-variant-numeric: tabular-nums; }
-::selection { background: #c7d2fe; }
+::selection { background: rgb(var(--indigo-200)); }
+::placeholder { color: rgb(var(--stone-400)); opacity: 1; }
+
+/* Keyboard focus is always visible */
+:focus-visible { outline: 2px solid rgb(var(--link)); outline-offset: 2px; border-radius: 10px; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offset: 0; }
+
+/* ───────── Functional layer: glass (bars, floating controls, sheets) ───────── */
+@layer components {
+  .glass {
+    background: rgb(var(--glass) / var(--glass-alpha));
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    backdrop-filter: blur(24px) saturate(1.5);
+    box-shadow: inset 0 0 0 1px rgb(var(--glass-edge) / var(--glass-edge-alpha)), 0 8px 32px -8px rgb(var(--shadow) / 0.18), 0 1px 3px rgb(var(--shadow) / 0.06);
+  }
+  /* scroll edge effect: content fades where it meets a top bar instead of colliding with it */
+  .scroll-edge-top {
+    background: linear-gradient(to bottom, rgb(var(--canvas) / 0.92) 0%, rgb(var(--canvas) / 0.7) 60%, rgb(var(--canvas) / 0) 100%);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+    mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  }
+  .scroll-edge-bottom {
+    background: linear-gradient(to top, rgb(var(--canvas) / 0.95), rgb(var(--canvas) / 0));
+  }
+  .press { transition: transform 120ms ease, background-color 120ms ease, opacity 120ms ease; }
+  .press:active { transform: scale(0.97); }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .scroll-edge-top { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgb(var(--surface)); }
+}
+@media (prefers-contrast: more) {
+  .glass { box-shadow: inset 0 0 0 1px rgb(var(--stone-300)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  .press:active { transform: none; }
+}
+
+@keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.animate-sheet { animation: sheet-up 220ms cubic-bezier(.2,.8,.2,1); }
+.animate-fade { animation: fade-in 160ms ease-out; }

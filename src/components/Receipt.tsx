@@ -62,7 +62,7 @@ export function ReceiptInput({ value, onChange }: { value: string | null; onChan
     }
   };
 
-  const btn = 'inline-flex items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 py-2 text-sm text-stone-700 hover:bg-stone-50 disabled:opacity-50';
+  const btn = 'inline-flex items-center gap-1.5 rounded-full bg-stone-200/70 px-4 min-h-tap text-sm font-medium text-stone-900 hover:bg-stone-200 disabled:opacity-40';
   return (
     <div>
       <input ref={camRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => upload(e.target.files?.[0])} />
@@ -71,7 +71,7 @@ export function ReceiptInput({ value, onChange }: { value: string | null; onChan
         <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/50 px-3 py-2 text-sm">
           <FileText size={16} className="text-emerald-600" />
           <button type="button" className="flex-1 text-start text-emerald-800 hover:underline" onClick={() => !DEMO && openReceipt(value)}>קבלה מצורפת — לצפייה</button>
-          <button type="button" aria-label="הסרת הקבלה" className="text-stone-400 hover:text-red-600" onClick={() => onChange(null)}><X size={16} /></button>
+          <button type="button" aria-label="הסרת הקבלה" className="text-stone-400 hover:text-signal" onClick={() => onChange(null)}><X size={16} /></button>
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
@@ -83,7 +83,7 @@ export function ReceiptInput({ value, onChange }: { value: string | null; onChan
           </button>
         </div>
       )}
-      {err && <p className="text-xs text-red-600 mt-1">{err}</p>}
+      {err && <p className="text-xs text-signal mt-1">{err}</p>}
     </div>
   );
 }

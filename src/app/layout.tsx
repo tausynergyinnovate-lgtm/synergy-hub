@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: 'מרכז הניהול של צוות Synergy Innovate',
   robots: { index: false, follow: false },
 };
-export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#fafaf9' };
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: [{ media: '(prefers-color-scheme: light)', color: '#f2f2f7' }, { media: '(prefers-color-scheme: dark)', color: '#000000' }] };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -29,16 +29,16 @@ export default function BudgetPage() {
       <PageHeader title="תקציב" subtitle="מעקב הוצאות לפי פרויקט"
         actions={<Button variant="primary" onClick={() => editor.open('expenses', EXPENSE_FIELDS, { status: 'planned', category: 'אחר', date: todayISO() }, 'הוצאה חדשה')}><Plus size={15} />הוצאה</Button>} />
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 bg-surface rounded-2xl mb-5 overflow-hidden [&>*]:border-stone-200 [&>*:nth-child(odd)]:border-e sm:[&>*]:border-e sm:[&>*:last-child]:border-e-0 [&>*:nth-child(-n+2)]:border-b sm:[&>*]:border-b-0">
         {[
           { label: 'שולם', value: ils(sum(paid)) },
           { label: 'מתוכנן', value: ils(sum(planned)) },
           { label: 'ממתין להחזר', value: ils(sum(toReimburse)), sub: toReimburse.length ? `${toReimburse.length} הוצאות` : '' },
           { label: 'שולם בלי קבלה', value: String(paid.filter((x) => !x.receipt_path && !x.receipt_url).length), sub: '' },
         ].map((s) => (
-          <div key={s.label} className="bg-white rounded-2xl border border-stone-200/80 px-4 py-3">
-            <div className="text-xl font-bold tabular-nums">{s.value}</div>
-            <div className="text-xs text-stone-500">{s.label}{s.sub ? ` · ${s.sub}` : ''}</div>
+          <div key={s.label} className="px-4 py-3">
+            <div className="text-[0.8125rem] text-stone-500">{s.label}{s.sub ? ` · ${s.sub}` : ''}</div>
+            <div className="text-lg font-semibold tabular-nums text-stone-900 mt-0.5">{s.value}</div>
           </div>
         ))}
       </div>
@@ -73,12 +73,12 @@ export default function BudgetPage() {
           <ul className="divide-y divide-stone-100">
             {list.map((x) => (
               <li key={x.id} onClick={() => editor.open('expenses', EXPENSE_FIELDS, { ...x }, 'עריכת הוצאה')}
-                className="py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 cursor-pointer hover:bg-stone-50 -mx-2 px-2 rounded-lg">
+                className="py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 cursor-pointer hover:bg-stone-100 -mx-2 px-2 rounded-lg">
                 <span className="w-14 text-xs text-stone-500 tabular-nums">{fmtDate(x.date, true)}</span>
                 <span className="flex-1 min-w-[140px] text-sm">{x.title}<span className="block text-xs text-stone-400">{[x.category, x.paid_by && `שילם/ה: ${x.paid_by}`].filter(Boolean).join(' · ')}</span></span>
                 <ProjectLink id={x.project_id} plain />
                 {x.receipt_path && <button onClick={(e) => { e.stopPropagation(); openReceipt(x.receipt_path!); }} className="text-emerald-600 hover:text-emerald-800" title="צפייה בקבלה"><ReceiptIcon size={15} /></button>}
-                {x.receipt_url && <a href={x.receipt_url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-stone-400 hover:text-indigo-600" title="קבלה"><ExternalLink size={14} /></a>}
+                {x.receipt_url && <a href={x.receipt_url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-stone-400 hover:text-link" title="קבלה"><ExternalLink size={14} /></a>}
                 <Badge cls={EXPENSE_STATUS[x.status].cls}>{EXPENSE_STATUS[x.status].label}</Badge>
                 <span className="tabular-nums font-semibold w-20 text-start">{ils(Number(x.amount))}</span>
               </li>

@@ -35,7 +35,7 @@ export function DriveFiles({ folderUrl }: { folderUrl: string }) {
         const Icon = ICON[f.kind] ?? FileText;
         return (
           <li key={f.id}>
-            <a href={f.webViewLink} target="_blank" rel="noreferrer" className="flex items-center gap-2.5 py-2 text-sm hover:bg-stone-50 -mx-2 px-2 rounded-lg">
+            <a href={f.webViewLink} target="_blank" rel="noreferrer" className="flex items-center gap-2.5 py-2 text-sm hover:bg-stone-100 -mx-2 px-2 rounded-lg">
               <Icon size={16} className={f.kind === 'תיקייה' ? 'text-amber-500' : 'text-stone-400'} />
               <span className="flex-1 truncate text-stone-800">{f.name}</span>
               <span className="text-xs text-stone-400">{f.kind}</span>

@@ -103,11 +103,11 @@ function BoardCard({ t, subs, onDrag, onOpen }: { t: Task; subs: Task[]; onDrag:
   const done = subs.filter((s) => s.status === 'done').length;
   return (
     <div draggable onDragStart={() => onDrag(t.id)} onClick={onOpen}
-      className="bg-white rounded-xl border border-stone-200/80 p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04)] cursor-pointer hover:border-stone-300 active:cursor-grabbing">
+      className="bg-surface rounded-2xl p-3 shadow-[0_1px_2px_rgb(0_0_0/0.06)] cursor-pointer hover:shadow-md active:cursor-grabbing transition-shadow">
       <div className="flex items-start gap-2">
         <DoneToggle task={t} size={18} />
-        <div className={`flex-1 text-sm leading-snug ${t.status === 'done' ? 'line-through text-stone-400' : 'text-stone-800'}`}>
-          {t.priority === 'high' && t.status !== 'done' && <span className="text-red-500">! </span>}{t.title}
+        <div className={`flex-1 text-[0.9375rem] leading-snug ${t.status === 'done' ? 'line-through text-stone-500' : 'text-stone-900'}`}>
+          {t.priority === 'high' && t.status !== 'done' && <span className="text-orange-700 font-bold">! </span>}{t.title}
         </div>
       </div>
       <div className="flex items-center gap-2 mt-2.5 text-xs text-stone-500">

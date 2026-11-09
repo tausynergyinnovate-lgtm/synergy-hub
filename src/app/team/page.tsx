@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Copy, Plus, RefreshCw } from 'lucide-react';
 import { useHub } from '@/lib/hub';
-import { Avatar, Badge, Button, Card, PageHeader } from '@/components/ui';
+import { Avatar, Badge, Button, Card, PageHeader, inputCls } from '@/components/ui';
 import { LINK_FIELDS, MANAGER_FIELDS } from '@/components/forms';
 import { useEditor } from '@/components/useEditor';
 import { LINK_KIND } from '@/lib/labels';
@@ -34,7 +34,7 @@ export default function TeamPage() {
         <p className="text-xs text-stone-500 mb-2">רק מי שמופיע כאן עם מייל Google ומסומן פעיל יכול להתחבר. ההרשאה מתעדכנת מיד.</p>
         <ul className="divide-y divide-stone-100">
           {data.managers.map((m) => (
-            <li key={m.id} className={`py-3 flex flex-wrap items-center gap-x-3 gap-y-1 cursor-pointer hover:bg-stone-50 -mx-2 px-2 rounded-lg ${m.active ? '' : 'opacity-50'}`}
+            <li key={m.id} className={`py-3 flex flex-wrap items-center gap-x-3 gap-y-1 cursor-pointer hover:bg-stone-100 -mx-2 px-2 rounded-lg ${m.active ? '' : 'opacity-50'}`}
               onClick={() => editManager({ ...m }, `עריכה — ${m.name}`)}>
               <Avatar id={m.id} size={32} />
               <div className="flex-1 min-w-[160px]">
@@ -53,17 +53,17 @@ export default function TeamPage() {
       <Card title="לוח השנה של סינרגי">
         <label className="block text-xs font-medium text-stone-500 mb-1">מזהה הלוח (Calendar ID)</label>
         <div className="flex gap-2">
-          <input dir="ltr" className="flex-1 min-w-0 rounded-xl border border-stone-200 px-3 py-2 text-sm" value={cal} onChange={(e) => setCal(e.target.value)} placeholder="לדוגמה: name@gmail.com" />
+          <input dir="ltr" className={inputCls + ' flex-1 min-w-0'} value={cal} onChange={(e) => setCal(e.target.value)} placeholder="לדוגמה: name@gmail.com" />
           <Button onClick={() => setSetting('calendar_id', cal.trim())} disabled={cal === (data.settings.calendar_id ?? '')}>שמירה</Button>
         </div>
         <p className="text-xs text-stone-500 mt-1.5">ב-Google Calendar ← הגדרות הלוח ← ״שילוב הלוח״ ← Calendar ID. לוח ראשי של חשבון = כתובת המייל שלו. הלוח מוצג בהאב רק למי שהלוח משותף איתו.</p>
 
-        <div className="mt-5 rounded-xl bg-stone-50 border border-stone-100 p-3">
+        <div className="mt-5 rounded-xl bg-stone-100 p-3">
           <div className="text-sm font-medium">סנכרון אירועי ההאב ללוח</div>
           <p className="text-xs text-stone-500 mt-1">כל האירועים, השלבים והדדליינים מההאב מתפרסמים כפיד. מוסיפים אותו פעם אחת בחשבון של סינרגי: Google Calendar ← ״לוחות שנה אחרים״ ← + ← ״מכתובת URL״ ← מדביקים. גוגל מתעדכן מהפיד כמה פעמים ביום.</p>
           {ics ? (
             <div className="flex gap-2 mt-2">
-              <input readOnly dir="ltr" className="flex-1 min-w-0 rounded-lg border border-stone-200 bg-white px-2 py-1.5 text-xs" value={ics} onFocus={(e) => e.target.select()} />
+              <input readOnly dir="ltr" className="flex-1 min-w-0 rounded-lg bg-surface px-2 min-h-tap text-xs" value={ics} onFocus={(e) => e.target.select()} />
               <Button className="!py-1.5" onClick={async () => { await navigator.clipboard.writeText(ics); setCopied(true); setTimeout(() => setCopied(false), 1500); }}><Copy size={13} />{copied ? 'הועתק' : 'העתקה'}</Button>
               <Button variant="ghost" className="!py-1.5" title="יצירת קישור חדש (הישן יפסיק לעבוד)" onClick={() => {
                 if (!confirm('ליצור קישור חדש? הלוח שכבר נרשם לקישור הישן יפסיק להתעדכן.')) return;
@@ -78,7 +78,7 @@ export default function TeamPage() {
       <Card title="דרייב וקישורים" action={<Button onClick={() => editor.open('links', LINK_FIELDS, { kind: 'drive', pinned: true }, 'קישור חדש')}><Plus size={14} />קישור</Button>}>
         <label className="block text-xs font-medium text-stone-500 mb-1">תיקיית השורש של סינרגי בדרייב</label>
         <div className="flex gap-2">
-          <input dir="ltr" className="flex-1 min-w-0 rounded-xl border border-stone-200 px-3 py-2 text-sm" value={drive} onChange={(e) => setDrive(e.target.value)} placeholder="לדוגמה: https://drive.google.com/drive/folders/…" />
+          <input dir="ltr" className={inputCls + ' flex-1 min-w-0'} value={drive} onChange={(e) => setDrive(e.target.value)} placeholder="לדוגמה: https://drive.google.com/drive/folders/…" />
           <Button onClick={() => setSetting('drive_root_url', drive.trim())} disabled={drive === (data.settings.drive_root_url ?? '')}>שמירה</Button>
         </div>
         <p className="text-xs text-stone-500 mt-1.5">תיקייה לכל פרויקט מגדירים בעמוד הפרויקט (״עריכה״).</p>

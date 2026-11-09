@@ -18,15 +18,15 @@ export function ProjectGrid({ onlyIds }: { onlyIds?: Set<string> }) {
         const next = ts.filter((t) => t.status !== 'done' && t.due_date).sort((a, b) => (a.due_date! < b.due_date! ? -1 : 1))[0];
         const late = ts.filter((t) => t.status !== 'done' && t.due_date && t.due_date < today).length;
         return (
-          <Link key={p.id} href={`/projects/${p.slug}`} className="group min-w-0 rounded-xl border border-stone-200 p-3 hover:border-stone-300 hover:shadow-sm transition bg-white">
+          <Link key={p.id} href={`/projects/${p.slug}`} className="press group min-w-0 rounded-2xl p-3.5 bg-stone-100 hover:bg-stone-200/70">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.color ?? '#0ea5e9' }} />
-              <span className="font-medium text-sm flex-1 truncate group-hover:underline">{p.name}</span>
+              <span className="font-medium text-[0.9375rem] flex-1 truncate">{p.name}</span>
               <Avatars ids={p.owner_ids} size={22} />
             </div>
             <div className="mt-3"><Progress done={done} total={ts.length} color={p.color} /></div>
             <div className="mt-2 text-xs text-stone-500 truncate min-h-[16px]">
-              {late > 0 ? <span className="text-red-600">{late} באיחור</span> : next ? <>הבא: {next.title} · {fmtDate(next.due_date)}</> : ts.length ? 'אין דדליינים קרובים' : 'אין משימות עדיין'}
+              {late > 0 ? <span className="text-signal">{late} באיחור</span> : next ? <>הבא: {next.title} · {fmtDate(next.due_date)}</> : ts.length ? 'אין דדליינים קרובים' : 'אין משימות עדיין'}
             </div>
           </Link>
         );

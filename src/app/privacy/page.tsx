@@ -3,7 +3,7 @@ export const metadata = { title: 'Privacy · Synergy Hub' };
 export default function Privacy() {
   return (
     <main className="max-w-2xl mx-auto px-5 py-12 text-stone-800 leading-relaxed">
-      <h1 className="text-2xl font-bold mb-4">מדיניות פרטיות — Synergy Hub</h1>
+      <h1 className="text-[1.75rem] font-bold tracking-tight mb-4">מדיניות פרטיות — Synergy Hub</h1>
       <p className="mb-3">Synergy Hub הוא כלי ניהול פנימי של צוות המנהלים של Synergy Innovate, קהילת יזמות רפואית באוניברסיטת תל אביב. הגישה מוגבלת למנהלי הקהילה בלבד.</p>
       <p className="mb-3">בהתחברות עם Google אנחנו מקבלים רק את השם וכתובת המייל שלך, ומשתמשים בהם אך ורק כדי לזהות אותך כמנהל/ת ולשייך אלייך משימות. איננו ניגשים למידע אחר בחשבון Google שלך.</p>
       <p className="mb-3">הנתונים (משימות, פרויקטים, אירועים, אנשי קשר והוצאות) נשמרים ב-Supabase ונגישים רק למנהלים פעילים. איננו מוכרים או משתפים מידע עם צד שלישי. טקסט שנשלח לעוזר ה-AI מעובד דרך Anthropic API לצורך הפקת הצעות בלבד.</p>

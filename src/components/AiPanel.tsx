@@ -70,16 +70,16 @@ export function AiPanel() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end lg:justify-start bg-stone-900/20" onMouseDown={() => setAiOpen(false)}>
-      <aside onMouseDown={(e) => e.stopPropagation()} className="w-full sm:w-[480px] h-full bg-[#fafaf9] shadow-2xl flex flex-col">
-        <header className="flex items-center gap-2 px-4 h-14 border-b border-stone-200 bg-white">
-          <span className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center"><Sparkles size={16} /></span>
-          <div className="flex-1 leading-tight">
-            <div className="font-semibold text-sm">עוזר AI</div>
-            <div className="text-[11px] text-stone-400">{focus ? `בהקשר: ${focus.name}` : 'כותבים מה עושים — הוא מפרק ומשבץ'}</div>
+    <div className="fixed inset-0 z-50 flex justify-end lg:justify-start bg-black/35 animate-fade" onMouseDown={() => setAiOpen(false)}>
+      <aside role="dialog" aria-modal="true" aria-label="עוזר AI" onMouseDown={(e) => e.stopPropagation()} className="animate-sheet w-full sm:w-[480px] h-full bg-canvas shadow-2xl flex flex-col sm:rounded-s-3xl lg:rounded-s-none lg:rounded-e-3xl overflow-hidden">
+        <header className="flex items-center gap-2.5 px-3 ps-4 h-16 bg-surface/80 backdrop-blur-xl border-b border-stone-200">
+          <span className="w-9 h-9 rounded-full bg-accent text-white flex items-center justify-center shrink-0"><Sparkles size={18} /></span>
+          <div className="flex-1 min-w-0 leading-tight">
+            <div className="font-semibold">עוזר AI</div>
+            <div className="text-xs text-stone-500 truncate">{focus ? `בהקשר: ${focus.name}` : 'כותבים מה עושים — הוא מפרק ומשבץ'}</div>
           </div>
-          {msgs.length > 0 && <Button variant="ghost" className="text-xs" onClick={() => setMsgs([])}>שיחה חדשה</Button>}
-          <button onClick={() => setAiOpen(false)} className="p-1.5 rounded-lg hover:bg-stone-100 text-stone-500" aria-label="סגור"><X size={18} /></button>
+          {msgs.length > 0 && <Button variant="ghost" className="!px-3 text-sm" onClick={() => setMsgs([])}>שיחה חדשה</Button>}
+          <button onClick={() => setAiOpen(false)} className="w-tap h-tap rounded-full flex items-center justify-center hover:bg-stone-200/60 text-stone-600" aria-label="סגירה"><X size={20} /></button>
         </header>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
@@ -87,24 +87,24 @@ export function AiPanel() {
             <div className="space-y-2">
               <p className="text-sm text-stone-500 mb-3">כתבו בשפה חופשית. העוזר יציע משימות, תתי־משימות, אירועים ואנשי קשר — ושום דבר לא נשמר עד שתאשרו. הוא גם מחפש וקורא קבצים בדרייב של סינרגי, ואפשר להדביק קישור לקובץ.</p>
               {EXAMPLES.map((e) => (
-                <button key={e} onClick={() => setInput(e)} className="block w-full text-start text-sm rounded-xl border border-stone-200 bg-white px-3 py-2 hover:border-indigo-300">{e}</button>
+                <button key={e} onClick={() => setInput(e)} className="press block w-full text-start text-[0.9375rem] rounded-2xl bg-surface px-4 py-3 min-h-tap text-stone-800 hover:bg-stone-100">{e}</button>
               ))}
             </div>
           )}
           {msgs.map((m, i) =>
             m.role === 'user' ? (
-              <div key={i} className="flex justify-start"><div className="max-w-[85%] rounded-2xl rounded-ss-md bg-indigo-600 text-white text-sm px-3.5 py-2 whitespace-pre-wrap">{m.text}</div></div>
+              <div key={i} className="flex justify-start"><div className="max-w-[85%] rounded-[20px] rounded-ss-md bg-accent text-white text-[0.9375rem] px-4 py-2.5 whitespace-pre-wrap">{m.text}</div></div>
             ) : m.role === 'error' ? (
-              <div key={i} className="text-sm text-red-600 bg-red-50 rounded-xl px-3 py-2">{m.text}</div>
+              <div key={i} role="alert" className="text-sm text-signal bg-red-50 rounded-2xl px-4 py-2.5">{m.text}</div>
             ) : (
               <div key={i} className="space-y-2">
-                <div className="max-w-[92%] rounded-2xl rounded-se-md bg-white border border-stone-200 text-sm px-3.5 py-2 whitespace-pre-wrap text-stone-800">{m.text}</div>
+                <div className="max-w-[92%] rounded-[20px] rounded-se-md bg-surface text-[0.9375rem] px-4 py-2.5 whitespace-pre-wrap text-stone-900">{m.text}</div>
                 {!!m.sources?.length && (
                   <div className="max-w-[92%] flex flex-wrap gap-1.5">
                     {m.sources.slice(0, 6).map((src) => (
                       <a key={src.name} href={src.url} target="_blank" rel="noreferrer"
-                        className="inline-flex items-center gap-1 rounded-full border border-stone-200 bg-white px-2.5 py-1 text-xs text-stone-600 hover:border-indigo-300 hover:text-indigo-700">
-                        <FileText size={12} />{src.name}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 min-h-[32px] text-xs text-stone-700 hover:text-link">
+                        <FileText size={13} aria-hidden />{src.name}
                       </a>
                     ))}
                   </div>
@@ -116,17 +116,18 @@ export function AiPanel() {
               </div>
             ),
           )}
-          {busy && <div className="flex gap-1 px-2 py-3">{[0, 1, 2].map((d) => <span key={d} className="w-2 h-2 rounded-full bg-indigo-300 animate-bounce" style={{ animationDelay: `${d * 120}ms` }} />)}</div>}
+          {busy && <div role="status" aria-label="העוזר חושב" className="flex gap-1 px-2 py-3">{[0, 1, 2].map((d) => <span key={d} className="w-2 h-2 rounded-full bg-stone-400 animate-bounce" style={{ animationDelay: `${d * 120}ms` }} />)}</div>}
           <div ref={endRef} />
         </div>
 
-        <form className="p-3 border-t border-stone-200 bg-white" onSubmit={(e) => { e.preventDefault(); send(input); }}>
-          <div className="flex items-end gap-2 rounded-2xl border border-stone-200 px-3 py-2 focus-within:ring-2 focus-within:ring-indigo-200">
+        <form className="px-3 pt-2 pb-[max(env(safe-area-inset-bottom),12px)]" onSubmit={(e) => { e.preventDefault(); send(input); }}>
+          <div className="glass flex items-end gap-2 rounded-[24px] ps-4 pe-1.5 py-1.5 focus-within:ring-2 focus-within:ring-indigo-200">
             <textarea value={input} onChange={(e) => setInput(e.target.value)} rows={1} placeholder="על מה עובדים?"
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input); } }}
-              className="flex-1 resize-none text-sm focus:outline-none max-h-40 bg-transparent [field-sizing:content]" />
-            <button type="submit" disabled={!input.trim() || busy} className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center disabled:opacity-40" aria-label="שליחה"><ArrowUp size={16} /></button>
+              aria-label="הודעה לעוזר" className="flex-1 resize-none text-[0.9375rem] py-2 focus:outline-none focus-visible:outline-none max-h-40 bg-transparent [field-sizing:content]" />
+            <button type="submit" disabled={!input.trim() || busy} className="press w-9 h-9 shrink-0 rounded-full bg-accent text-white flex items-center justify-center disabled:opacity-30" aria-label="שליחה"><ArrowUp size={18} strokeWidth={2.4} /></button>
           </div>
+          <p className="text-[0.6875rem] text-stone-500 text-center mt-1.5">התשובות נוצרות ב-AI ועלולות לטעות. שום דבר לא נשמר בלי האישור שלכם.</p>
         </form>
       </aside>
     </div>
@@ -213,12 +214,12 @@ function PlanPreview({ plan: original, applied, onApplied }: { plan: AiPlan; app
     setBusy(false);
   };
 
-  const sel = 'text-xs rounded-lg border border-stone-200 bg-white px-1.5 py-0.5';
+  const sel = 'text-xs rounded-lg border border-stone-200 bg-surface px-1.5 py-0.5';
 
   const renderTask = (t: PlanTask, depth: number): React.ReactNode => (
     <div key={t.ref} style={{ marginInlineStart: depth * 18 }}>
       <Row active={on('t:' + t.ref)} applied={!!applied} onToggle={() => toggle('t:' + t.ref)}>
-        <div className="text-stone-800">{t.priority === 'high' && <span className="text-red-500">! </span>}{t.title}</div>
+        <div className="text-stone-800">{t.priority === 'high' && <span className="text-orange-700 font-bold">! </span>}{t.title}</div>
         <div className="flex flex-wrap items-center gap-1.5 mt-1 text-xs text-stone-500">
           {applied ? (
             <>{(t.assignee_ids ?? []).map((id) => manager(id)?.name).filter(Boolean).join(', ') || 'כל הצוות'}{t.due_date && <span>· {fmtDate(t.due_date)}</span>}</>
@@ -230,7 +231,7 @@ function PlanPreview({ plan: original, applied, onApplied }: { plan: AiPlan; app
                   return (
                     <button type="button" key={m.id} aria-pressed={on}
                       onClick={() => setTask(t.ref, { assignee_ids: on ? (t.assignee_ids ?? []).filter((x) => x !== m.id) : [...(t.assignee_ids ?? []), m.id] })}
-                      className={`rounded-full border px-2 py-0.5 text-xs ${on ? 'border-indigo-300 bg-indigo-50 text-indigo-800' : 'border-stone-200 bg-white text-stone-400'}`}>{m.name}</button>
+                      className={`rounded-full border px-2.5 min-h-[30px] text-xs ${on ? 'border-link bg-indigo-50 text-indigo-800 font-medium' : 'border-stone-200 bg-surface text-stone-600'}`}>{m.name}</button>
                   );
                 })}
               </span>
@@ -245,7 +246,7 @@ function PlanPreview({ plan: original, applied, onApplied }: { plan: AiPlan; app
   );
 
   return (
-    <div className={`rounded-2xl border ${applied ? 'border-emerald-200 bg-emerald-50/40' : 'border-indigo-200 bg-white'} p-3`}>
+    <div className={`rounded-[20px] p-4 ${applied ? 'bg-emerald-50' : 'bg-surface ring-1 ring-indigo-200'}`}>
       {plan.new_project && <Section title="פרויקט חדש"><Row active={on('np')} applied={!!applied} onToggle={() => toggle('np')}><span className="font-medium">{plan.new_project.name}</span>{plan.new_project.description && <div className="text-xs text-stone-500">{plan.new_project.description}</div>}</Row></Section>}
       {tasks.length > 0 && <Section title="משימות">{roots.map((t) => renderTask(t, 0))}</Section>}
       {!!plan.task_updates?.length && <Section title="עדכוני משימות">{plan.task_updates.map((u, i) => {
@@ -268,12 +269,12 @@ function PlanPreview({ plan: original, applied, onApplied }: { plan: AiPlan; app
         <Row key={i} active={on('d:' + i)} applied={!!applied} onToggle={() => toggle('d:' + i)}>{d.title}{d.proposal && <span className="text-stone-500"> — {d.proposal}</span>}</Row>
       ))}</Section>}
 
-      <div className="flex items-center justify-between mt-3 pt-2 border-t border-stone-100">
+      <div className="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-stone-200">
         {applied ? (
           <span className="flex items-center gap-1.5 text-sm text-emerald-700"><Check size={16} />{applied}</span>
         ) : (
           <>
-            <span className="text-xs text-stone-400">אפשר לבטל סימון ולשנות אחראי/תאריך</span>
+            <span className="text-xs text-stone-500">אפשר לבטל סימון ולשנות אחראי/תאריך</span>
             <Button variant="primary" disabled={busy} onClick={apply}><Check size={15} />{busy ? 'מוסיף…' : 'אישור והוספה'}</Button>
           </>
         )}
@@ -284,15 +285,15 @@ function PlanPreview({ plan: original, applied, onApplied }: { plan: AiPlan; app
 
 function Row({ active, applied, onToggle, children }: { active: boolean; applied: boolean; onToggle: () => void; children: React.ReactNode }) {
   return (
-    <div className={`flex items-start gap-2 py-1.5 ${active ? '' : 'opacity-40'}`}>
-      {!applied && <input type="checkbox" className="mt-1 accent-indigo-600 cursor-pointer" checked={active} onChange={onToggle} aria-label="לכלול" />}
+    <div className={`flex items-start gap-2.5 py-2 ${active ? '' : 'opacity-50'}`}>
+      {!applied && <input type="checkbox" className="mt-0.5 w-5 h-5 accent-accent cursor-pointer" checked={active} onChange={onToggle} aria-label="לכלול" />}
       <div className="flex-1 min-w-0 text-sm">{children}</div>
     </div>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return <div className="pt-2 first:pt-0"><div className="text-[11px] font-semibold text-stone-400 mb-0.5">{title}</div>{children}</div>;
+  return <div className="pt-2 first:pt-0"><div className="text-xs font-semibold text-stone-500 mb-0.5">{title}</div>{children}</div>;
 }
 
 function demoPlan(d: { managers: { id: string; name: string }[]; projects: { id: string; slug: string }[]; tasks: { id: string; title: string }[]; contacts: { id: string; name: string }[] }): AiPlan {
