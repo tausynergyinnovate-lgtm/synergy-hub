@@ -73,3 +73,6 @@ src/app/api/ics          פיד לוח השנה
 src/app/*                המסכים
 src/components/*         רכיבים משותפים (משימות, עוזר, חיפוש, טפסים)
 ```
+
+## Keep-alive
+Free Supabase projects pause after 7 idle days. `/api/keepalive` is hit daily by a Vercel cron (vercel.json) and every 2 days by a GitHub Action (.github/workflows/keepalive.yml).
