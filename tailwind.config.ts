@@ -14,12 +14,22 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/lib/**/*.{js,ts,jsx,tsx,mdx}",
   ],
+  future: { hoverOnlyWhenSupported: true }, // hover styles only on devices that can hover
   theme: {
     extend: {
+      boxShadow: {
+        card: "var(--shadow-card)",     // resting surface: hairline in light, 8% white edge in dark
+        raised: "var(--shadow-raised)", // floating: 3-layer shadow in light, edge + lighter surface in dark
+      },
+      borderRadius: {                   // one scale: tooltip 4 · input 8 · card 12 · sheet 16 · panel 24
+        input: "8px", card: "12px", sheet: "16px", panel: "24px",
+      },
+      transitionDuration: { press: "90ms", hover: "120ms", enter: "220ms", exit: "140ms" },
       colors: {
         ...palette,
         canvas: v("canvas"),          // app background (grouped)
         surface: v("surface"),        // cards, sheets, inputs
+        raised: v("raised"),          // toasts, menus, floating
         accent: { DEFAULT: v("accent"), hover: v("accent-hover") }, // prominent button fill
         link: v("link"),              // tinted text: links, selected tab
         signal: v("signal"),          // overdue / destructive text

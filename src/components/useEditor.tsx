@@ -10,7 +10,7 @@ type Row = Record<string, unknown> & { id?: string };
 
 /** One reusable add/edit dialog for any table. */
 export function useEditor() {
-  const { save, remove } = useHub();
+  const { save, remove, removeWithUndo } = useHub();
   const [state, setState] = useState<{ table: TableName; row: Row; fields: Field[]; title: string; transform?: (r: Row) => Row } | null>(null);
 
   const open = (table: TableName, fields: Field[], row: Row, title: string, transform?: (r: Row) => Row) =>
@@ -34,7 +34,17 @@ export function useEditor() {
         }
         return save(state.table, r);
       }}
-      onDelete={state?.row.id ? async () => { if (state?.row.id) await remove(state.table, state.row.id); } : undefined}
+      onDelete={state?.row.id ? async () => {
+        if (!state?.row.id) return;
+        // removing a manager is rare and hard to undo for someone mid-session: keep explicit friction
+        if (state.table === 'managers') {
+          const name = String(state.row.name ?? '');
+          if (prompt(`כדי למחוק לצמיתות, הקלידו את השם: ${name}\n(עדיף לסמן ״לא פעיל/ה״ — המשימות נשמרות)`) !== name) return false;
+          await remove(state.table, state.row.id); return;
+        }
+        const name = String(state.row.title ?? state.row.name ?? '');
+        removeWithUndo(state.table, state.row.id, name ? `״${name}״ נמחק` : 'נמחק');
+      } : undefined}
     />
   );
   return { open, element };

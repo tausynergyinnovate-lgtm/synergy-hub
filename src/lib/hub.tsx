@@ -42,7 +42,22 @@ interface HubCtx {
   aiOpen: boolean; setAiOpen: (v: boolean) => void; aiContext: { projectId?: string } ;
   openAi: (ctx?: { projectId?: string }) => void;
   searchOpen: boolean; setSearchOpen: (v: boolean) => void;
+  // feedback
+  toasts: Toast[];
+  toast: (t: Omit<Toast, 'id'>) => void;
+  dismissToast: (id: string) => void;
+  /** Delete now from the user's point of view, with an undo window; the server delete runs when the window closes. */
+  removeWithUndo: (table: TableName, id: string, label: string) => void;
 }
+
+export interface Toast {
+  id: string;
+  kind: 'info' | 'success' | 'error';
+  text: string;
+  action?: { label: string; run: () => void };
+  ms?: number;            // auto-dismiss after; errors default 7s, others 4s
+}
+const UNDO_MS = 7000;
 
 const Ctx = createContext<HubCtx | null>(null);
 export const useHub = () => {
@@ -62,11 +77,27 @@ export function HubProvider({ children }: { children: React.ReactNode }) {
   const [aiContext, setAiContext] = useState<{ projectId?: string }>({});
   const [searchOpen, setSearchOpen] = useState(false);
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const dataRef = useRef(data); dataRef.current = data;
+  // rows hidden by an undo-able delete that hasn't reached the server yet
+  const pending = useRef<Map<string, { table: TableName; rows: AnyRow[]; timer: ReturnType<typeof setTimeout>; commit: () => void }>>(new Map());
+
+  const dismissToast = useCallback((id: string) => setToasts((all) => all.filter((t) => t.id !== id)), []);
+  const toast = useCallback((t: Omit<Toast, 'id'>) => {
+    const id = crypto.randomUUID();
+    setToasts((all) => [...all, { ...t, id }].slice(-3)); // max 3 visible
+    setTimeout(() => dismissToast(id), t.ms ?? (t.kind === 'error' ? 7000 : 4000));
+  }, [dismissToast]);
+
+  const hidePending = (t: TableName, rows: AnyRow[]) => {
+    const gone = new Set(Array.from(pending.current.values()).filter((p) => p.table === t).flatMap((p) => p.rows.map((r) => r.id)));
+    return gone.size ? rows.filter((r) => !gone.has(r.id)) : rows;
+  };
 
   const fetchTable = useCallback(async (t: TableName) => {
     const { data: rows, error } = await sb().from(t).select('*').order(ORDER[t] || 'created_at', { ascending: true });
     if (error) { console.error(t, error); return; }
-    setData((d) => ({ ...d, [t]: rows ?? [] }));
+    setData((d) => ({ ...d, [t]: hidePending(t, (rows ?? []) as AnyRow[]) }));
   }, []);
 
   const fetchSettings = useCallback(async () => {
@@ -149,15 +180,15 @@ export function HubProvider({ children }: { children: React.ReactNode }) {
     if (id) {
       setData((d) => ({ ...d, [table]: (d[table] as unknown as AnyRow[]).map((r) => (r.id === id ? { ...r, ...rest } : r)) }));
       const { data: out, error } = await sb().from(table).update(rest).eq('id', id).select().single();
-      if (error) { alert('שמירה נכשלה: ' + error.message); fetchTable(table); return null; }
+      if (error) { toast({ kind: 'error', text: 'השינוי לא נשמר — ' + humanError(error.message), action: { label: 'רענון', run: () => loadAll() } }); fetchTable(table); return null; }
       setData((d) => ({ ...d, [table]: (d[table] as unknown as AnyRow[]).map((r) => (r.id === id ? out : r)) }));
       return out as AnyRow;
     }
     const { data: out, error } = await sb().from(table).insert(rest).select().single();
-    if (error) { alert('שמירה נכשלה: ' + error.message); return null; }
+    if (error) { toast({ kind: 'error', text: 'לא הצלחנו להוסיף — ' + humanError(error.message), action: { label: 'רענון', run: () => loadAll() } }); return null; }
     setData((d) => ({ ...d, [table]: [...(d[table] as unknown as AnyRow[]), out] }));
     return out as AnyRow;
-  }, [fetchTable]);
+  }, [fetchTable, toast, loadAll]);
 
   const saveMany: HubCtx['saveMany'] = useCallback(async (table, rows) => {
     if (!rows.length) return [];
@@ -167,25 +198,51 @@ export function HubProvider({ children }: { children: React.ReactNode }) {
       return out;
     }
     const { data: out, error } = await sb().from(table).insert(rows).select();
-    if (error) { alert('שמירה נכשלה: ' + error.message); return []; }
+    if (error) { toast({ kind: 'error', text: 'לא הצלחנו להוסיף — ' + humanError(error.message), action: { label: 'רענון', run: () => loadAll() } }); return []; }
     setData((d) => ({ ...d, [table]: [...(d[table] as unknown as AnyRow[]), ...(out ?? [])] }));
     return (out ?? []) as AnyRow[];
-  }, []);
+  }, [toast, loadAll]);
 
   const remove: HubCtx['remove'] = useCallback(async (table, id) => {
     setData((d) => ({ ...d, [table]: (d[table] as unknown as AnyRow[]).filter((r) => r.id !== id && !(table === 'tasks' && r.parent_id === id)) }));
     if (DEMO) return;
     const { error } = await sb().from(table).delete().eq('id', id);
-    if (error) { alert('מחיקה נכשלה: ' + error.message); fetchTable(table); }
+    if (error) { toast({ kind: 'error', text: 'המחיקה לא בוצעה — ' + humanError(error.message), action: { label: 'רענון', run: () => loadAll() } }); fetchTable(table); }
     if (table === 'tasks') fetchTable('tasks'); // cascade of sub-tasks
-  }, [fetchTable]);
+  }, [fetchTable, toast, loadAll]);
+
+  const removeWithUndo = useCallback((table: TableName, id: string, label: string) => {
+    const hidden = (dataRef.current[table] as unknown as AnyRow[]).filter((r) => r.id === id || (table === 'tasks' && r.parent_id === id));
+    const ids = new Set(hidden.map((r) => r.id));
+    setData((d) => ({ ...d, [table]: (d[table] as unknown as AnyRow[]).filter((r) => !ids.has(r.id)) }));
+    const commit = () => { pending.current.delete(id); remove(table, id); };
+    const timer = setTimeout(commit, UNDO_MS);
+    pending.current.set(id, { table, rows: hidden, timer, commit });
+    toast({
+      kind: 'info', text: label, ms: UNDO_MS,
+      action: {
+        label: 'ביטול', run: () => {
+          const p = pending.current.get(id); if (!p) return;
+          clearTimeout(p.timer); pending.current.delete(id);
+          setData((d) => ({ ...d, [table]: [...(d[table] as unknown as AnyRow[]), ...p.rows] }));
+        },
+      },
+    });
+  }, [remove, toast]);
+
+  // leaving the page closes every undo window
+  useEffect(() => {
+    const flush = () => pending.current.forEach((p) => { clearTimeout(p.timer); p.commit(); });
+    window.addEventListener('pagehide', flush);
+    return () => window.removeEventListener('pagehide', flush);
+  }, []);
 
   const setSetting = useCallback(async (key: string, value: string) => {
     setData((d) => ({ ...d, settings: { ...d.settings, [key]: value } }));
     if (DEMO) return;
     const { error } = await sb().from('settings').upsert({ key, value });
-    if (error) alert('שמירה נכשלה: ' + error.message);
-  }, []);
+    if (error) toast({ kind: 'error', text: 'ההגדרה לא נשמרה — ' + humanError(error.message), action: { label: 'רענון', run: () => loadAll() } });
+  }, [toast, loadAll]);
 
   const signOut = useCallback(async () => { if (DEMO) return; await sb().auth.signOut(); router.replace('/login'); }, [router]);
 
@@ -204,10 +261,19 @@ export function HubProvider({ children }: { children: React.ReactNode }) {
       aiOpen, setAiOpen, aiContext,
       openAi: (ctx) => { setAiContext(ctx ?? {}); setAiOpen(true); },
       searchOpen, setSearchOpen,
+      toasts, toast, dismissToast, removeWithUndo,
     };
-  }, [phase, email, data, save, saveMany, remove, setSetting, signOut, taskModal, aiOpen, aiContext, searchOpen]);
+  }, [phase, email, data, save, saveMany, remove, setSetting, signOut, taskModal, aiOpen, aiContext, searchOpen, toasts, toast, dismissToast, removeWithUndo]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+/** Turn database errors into something a manager can act on. */
+function humanError(msg: string) {
+  if (/row-level security|permission denied/i.test(msg)) return 'אין הרשאה. ייתכן שההתחברות פגה, התחברו מחדש.';
+  if (/fetch|network|Failed to/i.test(msg)) return 'אין חיבור לשרת. בדקו את האינטרנט ונסו שוב.';
+  if (/duplicate key/i.test(msg)) return 'הפריט כבר קיים.';
+  return msg;
 }
 
 export async function getAccessToken(): Promise<string | null> {

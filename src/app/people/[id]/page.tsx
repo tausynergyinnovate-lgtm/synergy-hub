@@ -1,5 +1,6 @@
 'use client';
 
+import { PartyPopper } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useHub } from '@/lib/hub';
 import { CONTACT_STATUS, EVENT_KIND, addDays, fmtDate, todayISO } from '@/lib/labels';
@@ -49,7 +50,7 @@ export default function PersonPage() {
       <div className="grid lg:grid-cols-5 gap-5">
         <Card title="משימות" className="lg:col-span-3">
           <QuickAdd defaults={{ assignee_ids: [m.id] }} placeholder={`משימה חדשה ל${m.name}…`} />
-          {open.length === 0 && <Empty>אין משימות פתוחות</Empty>}
+          {open.length === 0 && <Empty icon={PartyPopper}>אין משימות פתוחות. הכל סגור.</Empty>}
           {group('באיחור', overdue, 'text-signal')}
           {group('השבוע', thisWeek, 'text-orange-600')}
           {group('בהמשך', later)}

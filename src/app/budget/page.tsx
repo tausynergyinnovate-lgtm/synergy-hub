@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { ExternalLink, Plus, Receipt as ReceiptIcon } from 'lucide-react';
+import { ExternalLink, Plus, Receipt, Receipt as ReceiptIcon, SearchX } from 'lucide-react';
 import { openReceipt } from '@/components/Receipt';
 import { useHub } from '@/lib/hub';
 import { EXPENSE_STATUS, fmtDate, ils, todayISO } from '@/lib/labels';
@@ -29,7 +29,7 @@ export default function BudgetPage() {
       <PageHeader title="תקציב" subtitle="מעקב הוצאות לפי פרויקט"
         actions={<Button variant="primary" onClick={() => editor.open('expenses', EXPENSE_FIELDS, { status: 'planned', category: 'אחר', date: todayISO() }, 'הוצאה חדשה')}><Plus size={15} />הוצאה</Button>} />
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 bg-surface rounded-2xl mb-5 overflow-hidden [&>*]:border-stone-200 [&>*:nth-child(odd)]:border-e sm:[&>*]:border-e sm:[&>*:last-child]:border-e-0 [&>*:nth-child(-n+2)]:border-b sm:[&>*]:border-b-0">
+      <div className="grid grid-cols-2 sm:grid-cols-4 bg-surface rounded-card mb-5 overflow-hidden [&>*]:border-stone-200 [&>*:nth-child(odd)]:border-e sm:[&>*]:border-e sm:[&>*:last-child]:border-e-0 [&>*:nth-child(-n+2)]:border-b sm:[&>*]:border-b-0">
         {[
           { label: 'שולם', value: ils(sum(paid)) },
           { label: 'מתוכנן', value: ils(sum(planned)) },
@@ -45,7 +45,7 @@ export default function BudgetPage() {
 
       <div className="grid lg:grid-cols-3 gap-5">
         <Card title="לפי פרויקט" className="lg:col-span-1">
-          {byProject.length === 0 && <Empty>אין הוצאות עדיין</Empty>}
+          {byProject.length === 0 && <Empty>הסיכום לפי פרויקט יופיע כאן אחרי ההוצאה הראשונה</Empty>}
           <ul className="divide-y divide-stone-100">
             {byProject.map((g) => (
               <li key={g.id ?? 'none'} className="py-2 flex items-center gap-2 text-sm">
@@ -69,7 +69,9 @@ export default function BudgetPage() {
             </select>
           </div>
         }>
-          {list.length === 0 && <Empty>אין הוצאות להצגה</Empty>}
+          {list.length === 0 && (data.expenses.length
+            ? <Empty kind="filtered" icon={SearchX} action={{ label: 'ניקוי הסינון', onClick: () => { setProj(''); setStatus(''); } }}>אין הוצאות שמתאימות לסינון</Empty>
+            : <Empty icon={Receipt} action={{ label: 'הוספת הוצאה ראשונה', onClick: () => editor.open('expenses', EXPENSE_FIELDS, { status: 'planned', category: 'אחר', date: todayISO() }, 'הוצאה חדשה') }}>עוד לא נרשמו הוצאות. מצלמים קבלה ומוסיפים בשנייה.</Empty>)}
           <ul className="divide-y divide-stone-100">
             {list.map((x) => (
               <li key={x.id} onClick={() => editor.open('expenses', EXPENSE_FIELDS, { ...x }, 'עריכת הוצאה')}

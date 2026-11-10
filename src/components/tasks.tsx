@@ -42,7 +42,7 @@ export function TaskRow({ task, showProject = true, showAssignee = true, depth =
   return (
     <>
       <div onClick={() => openTask(task.id)}
-        className="group flex items-center gap-3 min-h-[52px] py-2 px-2 -mx-2 rounded-xl hover:bg-stone-100 active:bg-stone-100 cursor-pointer"
+        className="group flex items-center gap-3 min-h-[52px] lg:min-h-[40px] py-2 lg:py-1.5 px-2 -mx-2 rounded-input hover:bg-stone-100 active:bg-stone-100 cursor-pointer"
         style={{ paddingInlineStart: 8 + depth * 22 }}>
         {expandable && subs.length > 0 ? (
           <button onClick={(e) => { e.stopPropagation(); setOpen(!open); }} className="w-6 h-tap -ms-1.5 flex items-center justify-center text-stone-500 hover:text-stone-800" aria-label={open ? 'הסתרת תתי־משימות' : 'הצגת תתי־משימות'} aria-expanded={open}>
@@ -51,7 +51,7 @@ export function TaskRow({ task, showProject = true, showAssignee = true, depth =
         ) : <span className="w-[18px] -ms-1.5" />}
         <DoneToggle task={task} size={depth ? 17 : 20} />
         <div className="flex-1 min-w-0">
-          <div className={`text-[0.9375rem] leading-snug ${task.status === 'done' ? 'line-through text-stone-500' : 'text-stone-900'}`}>
+          <div className={`text-[0.9375rem] lg:text-sm leading-snug ${task.status === 'done' ? 'line-through text-stone-500' : 'text-stone-900'}`}>
             {task.priority === 'high' && task.status !== 'done' && <span className="text-orange-700 font-bold me-1">!</span>}
             {task.title}
           </div>
@@ -126,7 +126,7 @@ const TASK_FIELDS: Field[] = [
 
 /** Global task modal — opened from anywhere via openTask / openNewTask */
 export function TaskModal() {
-  const { taskModal, openTask, data, save, remove, subtasks } = useHub();
+  const { taskModal, openTask, data, save, removeWithUndo, subtasks } = useHub();
   const existing = taskModal?.id ? data.tasks.find((t) => t.id === taskModal.id) : null;
   const isNew = Boolean(taskModal && !taskModal.id);
   const [draft, setDraft] = useState<Partial<Task>>({});
@@ -160,7 +160,8 @@ export function TaskModal() {
         : isNew ? 'משימה חדשה' : 'משימה'}
       leading={isNew ? <Button variant="ghost" className="!px-3" onClick={close}>ביטול</Button> : undefined}
       trailing={isNew
-        ? <Button variant="primary" disabled={busy} onClick={async () => {
+        ? <Button variant="primary" aria-busy={busy} onClick={async () => {
+            if (busy) return;
             if (!title.trim()) { setTried(true); return; }
             setBusy(true);
             const res = await save('tasks', { status: 'todo', priority: 'medium', ...draft, title: title.trim(), notes: notes || null });
@@ -229,8 +230,8 @@ export function TaskModal() {
       {existing && (
         <div className="mt-6 pt-3 border-t border-stone-200">
           <Button variant="danger" className="w-full" onClick={async () => {
-            if (!confirm(subs.length ? `למחוק את המשימה ו-${subs.length} תתי־המשימות שלה? אי אפשר לבטל את זה.` : 'למחוק את המשימה? אי אפשר לבטל את זה.')) return;
-            await remove('tasks', existing.id); close();
+            removeWithUndo('tasks', existing.id, subs.length ? `״${existing.title}״ ו-${subs.length} תתי־משימות נמחקו` : `״${existing.title}״ נמחקה`);
+            close();
           }}><Trash2 size={16} />מחיקת המשימה</Button>
         </div>
       )}

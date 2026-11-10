@@ -47,7 +47,7 @@ export default function TimelinePage() {
 
       {view === 'gantt' && (
         <Card>
-          {events.length === 0 ? <Empty>אין אירועים עדיין</Empty> : (
+          {events.length === 0 ? <Empty icon={CalendarPlus}>עוד אין אירועים. כתבו לעוזר ״וובינר ב-3.12 עם…״ והוא ישבץ אותו בלוח.</Empty> : (
             <div className="overflow-x-auto -mx-4 px-4">
               <div className="min-w-[860px]">
                 <div className="grid grid-cols-[200px_1fr] text-xs text-stone-500 border-b border-stone-100 pb-1.5">

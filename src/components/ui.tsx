@@ -2,12 +2,17 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Users, X } from 'lucide-react';
+import { AlertCircle, Trash2, Users, X, type LucideIcon } from 'lucide-react';
 import { useHub } from '@/lib/hub';
 import { ReceiptInput } from './Receipt';
 
 export function Badge({ cls, children }: { cls?: string; children: React.ReactNode }) {
-  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${cls ?? 'bg-stone-100 text-stone-700'}`}>{children}</span>;
+  // neutral pill + status dot: no rainbow pills, and the label always carries the meaning
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-700 whitespace-nowrap">
+      {cls && <span aria-hidden className={`w-1.5 h-1.5 rounded-full ${cls}`} />}{children}
+    </span>
+  );
 }
 
 export function Avatar({ id, size = 24, team = true }: { id: string | null | undefined; size?: number; team?: boolean }) {
@@ -94,7 +99,7 @@ export function Progress({ done, total, color }: { done: number; total: number; 
 
 export function Card({ title, action, children, className = '' }: { title?: React.ReactNode; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <section className={`bg-surface rounded-2xl ${className}`}>
+    <section className={`bg-surface rounded-card shadow-card ${className}`}>
       {(title || action) && (
         <header className="flex flex-wrap items-center justify-between gap-2 px-4 pt-3.5 pb-1.5">
           <h2 className="font-semibold text-stone-900 text-[1.0625rem]">{title}</h2>
@@ -106,8 +111,19 @@ export function Card({ title, action, children, className = '' }: { title?: Reac
   );
 }
 
-export function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-stone-500 py-3">{children}</p>;
+/** Empty state: icon + warm line + one real next step. Use `kind="filtered"` when filters hide everything. */
+export function Empty({ children, icon: Icon, action, kind = 'first' }: {
+  children: React.ReactNode; icon?: LucideIcon;
+  action?: { label: string; onClick: () => void }; kind?: 'first' | 'filtered';
+}) {
+  if (!Icon && !action) return <p className="text-sm text-stone-500 py-3">{children}</p>;
+  return (
+    <div className="flex flex-col items-center text-center gap-2 py-8 px-4">
+      {Icon && <span className="w-11 h-11 rounded-full bg-stone-100 flex items-center justify-center text-stone-500"><Icon size={20} /></span>}
+      <p className="text-sm text-stone-600 max-w-xs">{children}</p>
+      {action && <Button variant={kind === 'filtered' ? 'ghost' : 'secondary'} onClick={action.onClick}>{action.label}</Button>}
+    </div>
+  );
 }
 
 export function PageHeader({ title, subtitle, actions }: { title: React.ReactNode; subtitle?: React.ReactNode; actions?: React.ReactNode }) {
@@ -141,13 +157,24 @@ export function Modal({ open, onClose, title, children, wide, leading, trailing 
 }) {
   const [drag, setDrag] = useState(0);
   const start = useRef<number | null>(null);
+  const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
     setDrag(0);
-    const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    const opener = document.activeElement as HTMLElement | null;
+    const h = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key === 'Tab') trapFocus(e, box.current);
+    };
     window.addEventListener('keydown', h);
     const prev = document.body.style.overflow; document.body.style.overflow = 'hidden';
-    return () => { window.removeEventListener('keydown', h); document.body.style.overflow = prev; };
+    // first field gets focus on desktop; on touch, don't pop the keyboard uninvited
+    requestAnimationFrame(() => {
+      const fine = window.matchMedia('(pointer: fine)').matches;
+      const first = box.current?.querySelector<HTMLElement>(fine ? 'input:not([type=hidden]),textarea,select' : '[aria-label="סגירה"],button');
+      (first ?? box.current)?.focus({ preventScroll: true });
+    });
+    return () => { window.removeEventListener('keydown', h); document.body.style.overflow = prev; opener?.focus?.({ preventScroll: true }); };
   }, [open, onClose]);
   if (!open) return null;
   const onDown = (e: React.PointerEvent) => { start.current = e.clientY; (e.target as HTMLElement).setPointerCapture?.(e.pointerId); };
@@ -155,9 +182,9 @@ export function Modal({ open, onClose, title, children, wide, leading, trailing 
   const onUp = () => { if (start.current === null) return; start.current = null; if (drag > 110) onClose(); else setDrag(0); };
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/35 animate-fade" onMouseDown={onClose}>
-      <div role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined} onMouseDown={(e) => e.stopPropagation()}
+      <div ref={box} tabIndex={-1} role="dialog" aria-modal="true" aria-label={typeof title === 'string' ? title : undefined} onMouseDown={(e) => e.stopPropagation()}
         style={drag ? { transform: `translateY(${drag}px)`, transition: 'none' } : undefined}
-        className={`animate-sheet bg-surface w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'} max-h-[94vh] sm:max-h-[88vh] overflow-y-auto overscroll-contain rounded-t-[28px] sm:rounded-3xl shadow-2xl transition-transform`}>
+        className={`animate-sheet bg-surface w-full ${wide ? 'sm:max-w-2xl' : 'sm:max-w-lg'} max-h-[94vh] sm:max-h-[88vh] overflow-y-auto overscroll-contain rounded-t-panel sm:rounded-sheet shadow-raised focus:outline-none transition-transform`}>
         <div className="sticky top-0 z-10 bg-surface/90 backdrop-blur-xl touch-none select-none"
           onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
           <div className="sm:hidden mx-auto mt-2 w-9 h-[5px] rounded-full bg-stone-300" aria-hidden />
@@ -175,6 +202,21 @@ export function Modal({ open, onClose, title, children, wide, leading, trailing 
   );
 }
 
+/** Keep Tab inside an open dialog. */
+export function trapFocus(e: KeyboardEvent, root: HTMLElement | null) {
+  if (!root) return;
+  const els = Array.from(root.querySelectorAll<HTMLElement>('a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'))
+    .filter((el) => el.offsetParent !== null);
+  if (!els.length) return;
+  const first = els[0], last = els[els.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
+
+export function Spinner({ size = 14 }: { size?: number }) {
+  return <span aria-hidden className="inline-block rounded-full border-2 border-current border-t-transparent animate-spin opacity-80" style={{ width: size, height: size }} />;
+}
+
 // ───────── generic form ─────────
 export type Field =
   | { key: string; label: string; type: 'text' | 'textarea' | 'date' | 'time' | 'url' | 'email' | 'number' | 'color'; required?: boolean; placeholder?: string }
@@ -185,7 +227,7 @@ export type Field =
   | { key: string; label: string; type: 'checkbox' }
   | { key: string; label: string; type: 'receipt' };
 
-export const inputCls = 'w-full rounded-xl border border-transparent bg-stone-100 px-3 min-h-tap py-2 text-[0.9375rem] text-stone-900 focus:outline-none focus:bg-surface focus:border-link focus:ring-2 focus:ring-indigo-200';
+export const inputCls = 'w-full rounded-input border border-transparent bg-stone-100 px-3 min-h-tap py-2 text-[0.9375rem] text-stone-900 focus:outline-none focus:bg-surface focus:border-link focus:ring-2 focus:ring-indigo-200';
 
 export function FieldInput({ f, value, onChange }: { f: Field; value: unknown; onChange: (v: unknown) => void }) {
   const { data } = useHub();
@@ -261,7 +303,7 @@ export function FormModal<T extends Record<string, unknown>>({
   open, onClose, title, fields, initial, onSubmit, onDelete,
 }: {
   open: boolean; onClose: () => void; title: string; fields: Field[]; initial: T;
-  onSubmit: (v: T) => Promise<unknown> | void; onDelete?: () => Promise<unknown> | void;
+  onSubmit: (v: T) => Promise<unknown> | void; onDelete?: () => Promise<unknown> | unknown;
 }) {
   const [v, setV] = useState<T>(initial);
   const [busy, setBusy] = useState(false);
@@ -273,10 +315,16 @@ export function FormModal<T extends Record<string, unknown>>({
   return (
     <Modal open={open} onClose={onClose} title={title}
       leading={<Button type="button" variant="ghost" className="!px-3" onClick={onClose}>ביטול</Button>}
-      trailing={<Button type="submit" form={formId} variant="primary" className="!px-4" disabled={busy}>{busy ? 'שומר…' : 'שמירה'}</Button>}>
+      trailing={<Button type="submit" form={formId} variant="primary" className="!px-4" aria-busy={busy}>{busy ? <><Spinner />שומר</> : 'שמירה'}</Button>}>
       <form id={formId} className="space-y-4 pt-1" noValidate onSubmit={async (e) => {
         e.preventDefault();
-        if (missing.length) { setTried(true); return; }
+        if (busy) return; // loading blocks a double submit without disabling the button
+        if (missing.length) {
+          setTried(true);
+          const el = (e.currentTarget as HTMLFormElement).querySelector<HTMLElement>(`[data-field="${missing[0].key}"] input, [data-field="${missing[0].key}"] select, [data-field="${missing[0].key}"] textarea, [data-field="${missing[0].key}"] button`);
+          el?.focus();
+          return;
+        }
         setBusy(true);
         const res = await onSubmit(v);
         setBusy(false);
@@ -289,19 +337,23 @@ export function FormModal<T extends Record<string, unknown>>({
             </span>
             {f.type === 'checkbox'
               ? <FieldInput f={f} value={v[f.key]} onChange={(x) => setV((s) => ({ ...s, [f.key]: x }))} />
-              : <div className={isMissing(f) ? 'rounded-xl ring-2 ring-red-400' : undefined}>
+              : <div data-field={f.key} className={isMissing(f) ? 'rounded-input ring-2 ring-red-400' : undefined}>
                   <FieldInput f={f} value={v[f.key]} onChange={(x) => setV((s) => ({ ...s, [f.key]: x }))} />
                 </div>}
+            {f.type !== 'checkbox' && isMissing(f) && (
+              <span className="flex items-center gap-1 mt-1 text-xs text-signal"><AlertCircle size={13} aria-hidden />צריך למלא את השדה הזה</span>
+            )}
           </label>
         ))}
         {tried && missing.length > 0 && (
-          <div role="alert" className="text-sm text-signal">כדי לשמור צריך למלא: {missing.map((f) => f.label).join(', ')}</div>
+          <div role="alert" className="sr-only">כדי לשמור צריך למלא: {missing.map((f) => f.label).join(', ')}</div>
         )}
         {onDelete && (
           <div className="pt-3 border-t border-stone-200">
+            {/* acts immediately; an undo toast replaces "are you sure?" */}
             <Button type="button" variant="danger" className="w-full" onClick={async () => {
-              if (!confirm('למחוק? אי אפשר לבטל את זה.')) return; await onDelete(); onClose();
-            }}>מחיקה</Button>
+              const r = await onDelete(); if (r !== false) onClose();
+            }}><Trash2 size={16} />מחיקה</Button>
           </div>
         )}
       </form>
@@ -320,4 +372,4 @@ export function Pills<T extends string>({ value, onChange, options }: { value: T
   );
 }
 
-export const selectCls = 'rounded-xl border border-transparent bg-stone-200/60 px-3 min-h-tap text-sm text-stone-900';
+export const selectCls = 'rounded-input border border-transparent bg-stone-200/60 px-3 min-h-tap text-sm text-stone-900';

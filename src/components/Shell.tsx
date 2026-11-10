@@ -11,6 +11,7 @@ import { Avatar, Button } from './ui';
 import { TaskModal } from './tasks';
 import { AiPanel } from './AiPanel';
 import { SearchDialog } from './SearchDialog';
+import { Toaster } from './Toaster';
 
 // Sidebar (desktop): every section. Tab bar (phone/tablet): five tabs, the rest live under "ניהול".
 const NAV = [
@@ -50,6 +51,33 @@ function Logo() {
   );
 }
 
+/** Loading: a skeleton shaped like the real layout, shown only if loading passes 300ms. */
+function ShellSkeleton() {
+  const bar = (w: string, h = 'h-4') => <div className={`skeleton ${h} ${w}`} />;
+  return (
+    <div role="status" aria-label="טוען את ההאב" className="min-h-screen lg:flex delay-appear">
+      <aside className="hidden lg:block w-64 shrink-0 h-screen bg-stone-100/80 border-e border-stone-200 p-4 space-y-3">
+        <div className="flex items-center gap-2.5 pb-3"><div className="skeleton w-[30px] h-[30px] !rounded-[9px]" />{bar('w-28')}</div>
+        {bar('w-full', 'h-9')}
+        {Array.from({ length: 7 }, (_, i) => <div key={i}>{bar(i % 2 ? 'w-24' : 'w-32')}</div>)}
+      </aside>
+      <div className="flex-1 max-w-6xl mx-auto px-4 lg:px-8 pt-16 space-y-5">
+        {bar('w-32', 'h-3.5')}{bar('w-64', 'h-8')}
+        <div className="flex gap-2">{[0, 1, 2, 3].map((i) => <div key={i} className="skeleton h-11 w-28 !rounded-full" />)}</div>
+        <div className="grid lg:grid-cols-5 gap-5">
+          <div className="lg:col-span-3 bg-surface rounded-card shadow-card p-4 space-y-4">
+            {bar('w-32', 'h-5')}
+            {Array.from({ length: 5 }, (_, i) => <div key={i} className="flex items-center gap-3"><div className="skeleton w-5 h-5 !rounded-full" /><div className="flex-1 space-y-1.5">{bar(i % 2 ? 'w-2/3' : 'w-5/6')}{bar('w-24', 'h-3')}</div></div>)}
+          </div>
+          <div className="lg:col-span-2 bg-surface rounded-card shadow-card p-4 space-y-4">
+            {bar('w-28', 'h-5')}{Array.from({ length: 4 }, (_, i) => <div key={i}>{bar('w-full', 'h-10')}</div>)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Center({ children }: { children: React.ReactNode }) {
   return <div className="min-h-screen flex items-center justify-center p-6"><div className="max-w-md w-full text-center space-y-4">{children}</div></div>;
 }
@@ -85,9 +113,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <p className="text-stone-600">חסרים משתני הסביבה של Supabase. הוסיפו את <code dir="ltr">NEXT_PUBLIC_SUPABASE_URL</code> ו-<code dir="ltr">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> (ראו README).</p>
     </Center>
   );
-  if (phase === 'loading' || phase === 'signed_out') return (
-    <Center><div role="status" aria-label="טוען" className="w-8 h-8 mx-auto rounded-full border-2 border-stone-200 border-t-link animate-spin" /></Center>
-  );
+  if (phase === 'loading' || phase === 'signed_out') return <ShellSkeleton />;
   if (phase === 'not_manager') return (
     <Center>
       <div className="flex justify-center"><Logo /></div>
@@ -104,6 +130,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen lg:flex">
+      <a href="#main" className="skip-link rounded-input bg-raised shadow-raised px-4 py-2 text-sm font-medium text-stone-900">דילוג לתוכן</a>
       {/* ───── Desktop sidebar (leading edge = right in RTL) ───── */}
       <aside className="hidden lg:flex flex-col w-64 shrink-0 sticky top-0 h-screen overflow-y-auto bg-stone-100/80 border-e border-stone-200">
         <div className="px-4 pt-5 pb-4"><Logo /></div>
@@ -155,7 +182,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             {me && <Link href={`/people/${me.id}`} className="w-tap h-tap flex items-center justify-center rounded-full lg:ms-1" aria-label="הלוח שלי"><Avatar id={me.id} size={30} /></Link>}
           </div>
         </header>
-        <main className="max-w-6xl mx-auto px-4 lg:px-8 pt-2 pb-44 lg:pb-28">{children}</main>
+        <main id="main" tabIndex={-1} className="max-w-6xl mx-auto px-4 lg:px-8 pt-2 pb-44 lg:pb-28 focus:outline-none">{children}</main>
       </div>
 
       {/* ───── Desktop: composer floats at the bottom of the content column ───── */}
@@ -185,6 +212,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <TaskModal />
       <AiPanel />
       <SearchDialog />
+      <Toaster />
     </div>
   );
 }

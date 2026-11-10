@@ -18,7 +18,7 @@ export function ProjectGrid({ onlyIds }: { onlyIds?: Set<string> }) {
         const next = ts.filter((t) => t.status !== 'done' && t.due_date).sort((a, b) => (a.due_date! < b.due_date! ? -1 : 1))[0];
         const late = ts.filter((t) => t.status !== 'done' && t.due_date && t.due_date < today).length;
         return (
-          <Link key={p.id} href={`/projects/${p.slug}`} className="press group min-w-0 rounded-2xl p-3.5 bg-stone-100 hover:bg-stone-200/70">
+          <Link key={p.id} href={`/projects/${p.slug}`} className="press group min-w-0 rounded-card p-3.5 bg-stone-100 hover:bg-stone-200/70">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.color ?? '#0ea5e9' }} />
               <span className="font-medium text-[0.9375rem] flex-1 truncate">{p.name}</span>

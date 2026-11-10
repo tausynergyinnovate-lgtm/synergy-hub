@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Mail, Phone, Plus } from 'lucide-react';
+import { Mail, Phone, Plus, SearchX, UserPlus } from 'lucide-react';
 import { useHub } from '@/lib/hub';
 import { CONTACT_KIND, CONTACT_STATUS } from '@/lib/labels';
 import { Avatars, Badge, Button, Card, Empty, PageHeader, ProjectLink, selectCls } from '@/components/ui';
@@ -42,10 +42,12 @@ function ContactsInner() {
         <select className={selectCls} value={proj} onChange={(e) => setProj(e.target.value)}>
           <option value="">כל הפרויקטים</option>{data.projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
-        <input className={selectCls + ' flex-1 min-w-[140px]'} placeholder="חיפוש…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input className={selectCls + ' flex-1 min-w-[140px]'} placeholder="חיפוש לפי שם, ארגון או נושא" aria-label="חיפוש אנשי קשר" value={q} onChange={(e) => setQ(e.target.value)} />
       </div>
       <Card>
-        {list.length === 0 && <Empty>אין אנשי קשר להצגה</Empty>}
+        {list.length === 0 && (data.contacts.length
+          ? <Empty kind="filtered" icon={SearchX} action={{ label: 'ניקוי הסינון', onClick: () => { setKind(''); setStatus(''); setProj(''); setQ(''); } }}>אף איש קשר לא מתאים לסינון</Empty>
+          : <Empty icon={UserPlus} action={{ label: 'הוספת איש קשר', onClick: () => editor.open('contacts', CONTACT_FIELDS, { kind: 'speaker', status: 'not_contacted' }, 'איש קשר חדש') }}>כאן נאספים מרצים, מנטורים ושותפים, עם סטטוס הפנייה לכל אחד.</Empty>)}
         <ul className="divide-y divide-stone-100">
           {list.map((c) => (
             <li key={c.id} onClick={() => editor.open('contacts', CONTACT_FIELDS, { ...c }, c.name)}

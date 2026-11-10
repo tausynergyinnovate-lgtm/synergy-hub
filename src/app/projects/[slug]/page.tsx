@@ -44,7 +44,7 @@ export default function ProjectPage() {
   return (
     <div className="space-y-5">
       {/* header */}
-      <div className="rounded-3xl bg-surface overflow-hidden">
+      <div className="rounded-card bg-surface shadow-card overflow-hidden">
         <div className="h-1.5" style={{ background: p.color ?? '#0ea5e9' }} />
         <div className="p-5">
           <div className="flex flex-wrap items-start gap-3">

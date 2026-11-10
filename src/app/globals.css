@@ -4,14 +4,20 @@
 @tailwind utilities;
 
 /* ───────── Semantic tokens ─────────
-   canvas   grouped background        light #F2F2F7  dark #000000
-   surface  cards, sheets, inputs     light #FFFFFF  dark #1C1C1E
+   Style direction: A · Engineered/Dense (daily internal tool) layered with E · Mobile-first.
+   canvas   grouped background        light #F2F2F7  dark #121212 (never pure black)
+   surface  cards, sheets, inputs     light #FDFDFE  dark #1E1E21 (each elevation step lighter)
+   raised   menus, toasts, floating   light #FFFFFF  dark #2A2A2E
    accent   prominent button fill     light #4F46E5  dark #5856E0  (white label 6.3:1 / 5.5:1)
    link     tinted text, selected tab light #4F46E5  dark #A5A6FF  (6.3:1 on white / 7.6:1 on #1C1C1E)
    signal   overdue, destructive      light #C8102E  dark #FF6B6B  (5.9:1 / 6.1:1)            */
 :root {
   --canvas: 242 242 247;
-  --surface: 255 255 255;
+  --surface: 253 253 254;
+  --raised: 255 255 255;
+  --focus: 28 28 30;
+  --shadow-card: 0 0 0 1px rgb(0 0 0 / 0.04), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-raised: 0 1px 3px rgb(0 0 0 / 0.08), 0 4px 12px rgb(0 0 0 / 0.08), 0 16px 32px rgb(0 0 0 / 0.10);
   --accent: 79 70 229;
   --accent-hover: 67 56 202;
   --link: 79 70 229;
@@ -28,13 +34,18 @@
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --canvas: 0 0 0;
-    --surface: 28 28 30;
-    --accent: 88 86 224;
-    --accent-hover: 104 102 236;
-    --link: 165 166 255;
-    --signal: 255 107 107;
-    --glass: 30 30 32;
+    --canvas: 18 18 18;
+    --surface: 30 30 33;
+    --raised: 42 42 46;
+    --focus: 245 245 247;
+    --shadow-card: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+    --shadow-raised: inset 0 0 0 1px rgb(255 255 255 / 0.08), 0 8px 24px rgb(0 0 0 / 0.4);
+    /* accents desaturated ~20% for dark surfaces */
+    --accent: 95 93 200;
+    --accent-hover: 110 108 214;
+    --link: 172 173 240;
+    --signal: 245 120 115;
+    --glass: 34 34 37;
     --glass-edge: 255 255 255;
     --glass-alpha: 0.66;
     --glass-edge-alpha: 0.1;
@@ -67,7 +78,7 @@ input[type='date'], input[type='time'] { direction: rtl; }
 ::placeholder { color: rgb(var(--stone-400)); opacity: 1; }
 
 /* Keyboard focus is always visible */
-:focus-visible { outline: 2px solid rgb(var(--link)); outline-offset: 2px; border-radius: 10px; }
+:focus-visible { outline: 2px solid rgb(var(--focus)); outline-offset: 2px; } /* focus ≠ selected color, ≥3:1 everywhere */
 input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offset: 0; }
 
 /* ───────── Functional layer: glass (bars, floating controls, sheets) ───────── */
@@ -89,7 +100,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offs
   .scroll-edge-bottom {
     background: linear-gradient(to top, rgb(var(--canvas) / 0.95), rgb(var(--canvas) / 0));
   }
-  .press { transition: transform 120ms ease, background-color 120ms ease, opacity 120ms ease; }
+  .press { transition: transform 90ms ease-out, background-color 120ms ease-out, opacity 120ms ease-out; }
   .press:active { transform: scale(0.97); }
 }
 
@@ -104,7 +115,22 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline-offs
   .press:active { transform: none; }
 }
 
+/* motion: enter 200–300ms ease-out · exit ~40% faster ease-in · press <100ms · stagger 50ms */
 @keyframes sheet-up { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes toast-in { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (min-width: 1024px) { @keyframes toast-in { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } } }
+@keyframes drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 .animate-sheet { animation: sheet-up 220ms cubic-bezier(.2,.8,.2,1); }
 .animate-fade { animation: fade-in 160ms ease-out; }
+.animate-toast { animation: toast-in 200ms ease-out; }
+.animate-drain { animation-name: drain; animation-timing-function: linear; animation-fill-mode: forwards; }
+.skeleton {
+  background: linear-gradient(90deg, rgb(var(--stone-200)) 0%, rgb(var(--stone-100)) 50%, rgb(var(--stone-200)) 100%);
+  background-size: 200% 100%; animation: shimmer 1.4s linear infinite; border-radius: 8px;
+}
+/* show a loader only if the wait passes 300ms, a flash reads as a glitch */
+.delay-appear { animation: fade-in 200ms ease-out 300ms both; }
+.skip-link { position: absolute; inset-inline-start: 12px; top: -60px; z-index: 100; }
+.skip-link:focus { top: 12px; }

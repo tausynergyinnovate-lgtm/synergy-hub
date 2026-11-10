@@ -12,7 +12,8 @@ import { DoneToggle, TaskRow, TaskTree, sortTasks } from '@/components/tasks';
 type View = 'board' | 'list' | 'overdue';
 
 function TasksInner() {
-  const { data, openNewTask, openTask, save, subtasks } = useHub();
+  const { data, openNewTask, openTask, save, subtasks, toast } = useHub();
+  const [over, setOver] = useState<string | null>(null);
   const params = useSearchParams();
   const [view, setView] = useState<View>('board');
   const [who, setWho] = useState('');
@@ -54,9 +55,19 @@ function TasksInner() {
           {(Object.keys(TASK_STATUS) as TaskStatus[]).map((st) => {
             const col = sortTasks(top.filter((t) => t.status === st));
             return (
-              <div key={st} className="snap-start rounded-2xl bg-stone-100/70 p-2 min-h-[200px]"
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => { if (dragId) save('tasks', { id: dragId, status: st }); setDragId(null); }}>
+              <div key={st} className={`snap-start rounded-card p-2 min-h-[200px] transition-colors duration-hover ${over === st && dragId ? 'bg-indigo-50 ring-2 ring-inset ring-indigo-300' : 'bg-stone-100/70'}`}
+                onDragOver={(e) => { e.preventDefault(); if (over !== st) setOver(st); }}
+                onDragLeave={() => setOver((o) => (o === st ? null : o))}
+                onDrop={() => {
+                  setOver(null);
+                  const t = data.tasks.find((x) => x.id === dragId);
+                  if (t && t.status !== st) {
+                    const prev = t.status;
+                    save('tasks', { id: t.id, status: st });
+                    toast({ kind: 'info', text: `הועבר ל״${TASK_STATUS[st].label}״`, ms: 6000, action: { label: 'ביטול', run: () => save('tasks', { id: t.id, status: prev }) } });
+                  }
+                  setDragId(null);
+                }}>
                 <div className="flex items-center justify-between px-2 py-1.5">
                   <span className="text-sm font-semibold text-stone-700">{TASK_STATUS[st].label}</span>
                   <span className="text-xs text-stone-400 tabular-nums">{col.length}</span>
@@ -103,7 +114,7 @@ function BoardCard({ t, subs, onDrag, onOpen }: { t: Task; subs: Task[]; onDrag:
   const done = subs.filter((s) => s.status === 'done').length;
   return (
     <div draggable onDragStart={() => onDrag(t.id)} onClick={onOpen}
-      className="bg-surface rounded-2xl p-3 shadow-[0_1px_2px_rgb(0_0_0/0.06)] cursor-pointer hover:shadow-md active:cursor-grabbing transition-shadow">
+      className="bg-surface rounded-card p-3 shadow-[0_1px_2px_rgb(0_0_0/0.06)] cursor-pointer hover:shadow-md active:cursor-grabbing transition-shadow">
       <div className="flex items-start gap-2">
         <DoneToggle task={t} size={18} />
         <div className={`flex-1 text-[0.9375rem] leading-snug ${t.status === 'done' ? 'line-through text-stone-500' : 'text-stone-900'}`}>

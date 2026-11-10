@@ -11,7 +11,7 @@ function Group({ title, children }: { title?: string; children: React.ReactNode 
   return (
     <section>
       {title && <h2 className="px-4 mb-1.5 text-xs font-semibold text-stone-500 font-[inherit]">{title}</h2>}
-      <ul className="bg-surface rounded-2xl overflow-hidden divide-y divide-stone-200">{children}</ul>
+      <ul className="bg-surface rounded-card overflow-hidden divide-y divide-stone-200">{children}</ul>
     </section>
   );
 }

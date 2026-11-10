@@ -18,7 +18,7 @@ export default function LoginPage() {
   };
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
-      <div className="w-full max-w-sm bg-surface rounded-3xl p-8 text-center">
+      <div className="w-full max-w-sm bg-surface rounded-sheet shadow-card p-8 text-center">
         <div className="flex justify-center"><LogoMark size={56} /></div>
         <h1 className="mt-4 text-[1.75rem] font-bold tracking-tight">Synergy Hub</h1>
         <p className="text-sm text-stone-500 mt-1">מרכז הניהול של צוות Synergy Innovate</p>

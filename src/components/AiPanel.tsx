@@ -5,7 +5,7 @@ import { ArrowUp, Check, FileText, Sparkles, X } from 'lucide-react';
 import { getAccessToken, useHub } from '@/lib/hub';
 import type { AiPlan, PlanTask } from '@/lib/aiPlan';
 import { CONTACT_KIND, CONTACT_STATUS, EVENT_KIND, fmtDate, ils } from '@/lib/labels';
-import { Badge, Button } from './ui';
+import { Badge, Button, trapFocus } from './ui';
 
 type Source = { name: string; url?: string; kind: string };
 
@@ -34,6 +34,16 @@ export function AiPanel() {
   const [busy, setBusy] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs, busy]);
+  const panelRef = useRef<HTMLElement>(null);
+  // modal behavior: Esc closes, Tab stays inside, focus returns to the composer that opened it
+  useEffect(() => {
+    if (!aiOpen) return;
+    const opener = document.activeElement as HTMLElement | null;
+    const h = (e: KeyboardEvent) => { if (e.key === 'Escape') setAiOpen(false); else if (e.key === 'Tab') trapFocus(e, panelRef.current); };
+    window.addEventListener('keydown', h);
+    requestAnimationFrame(() => panelRef.current?.querySelector<HTMLElement>('textarea')?.focus({ preventScroll: true }));
+    return () => { window.removeEventListener('keydown', h); opener?.focus?.({ preventScroll: true }); };
+  }, [aiOpen, setAiOpen]);
 
   if (!aiOpen) return null;
   const focus = project(aiContext.projectId);
@@ -71,7 +81,7 @@ export function AiPanel() {
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end lg:justify-start bg-black/35 animate-fade" onMouseDown={() => setAiOpen(false)}>
-      <aside role="dialog" aria-modal="true" aria-label="עוזר AI" onMouseDown={(e) => e.stopPropagation()} className="animate-sheet w-full sm:w-[480px] h-full bg-canvas shadow-2xl flex flex-col sm:rounded-s-3xl lg:rounded-s-none lg:rounded-e-3xl overflow-hidden">
+      <aside ref={panelRef} role="dialog" aria-modal="true" aria-label="עוזר AI" onMouseDown={(e) => e.stopPropagation()} className="animate-sheet w-full sm:w-[480px] h-full bg-canvas shadow-2xl flex flex-col sm:rounded-s-panel lg:rounded-s-none lg:rounded-e-panel overflow-hidden">
         <header className="flex items-center gap-2.5 px-3 ps-4 h-16 bg-surface/80 backdrop-blur-xl border-b border-stone-200">
           <span className="w-9 h-9 rounded-full bg-accent text-white flex items-center justify-center shrink-0"><Sparkles size={18} /></span>
           <div className="flex-1 min-w-0 leading-tight">
@@ -87,7 +97,7 @@ export function AiPanel() {
             <div className="space-y-2">
               <p className="text-sm text-stone-500 mb-3">כתבו בשפה חופשית. העוזר יציע משימות, תתי־משימות, אירועים ואנשי קשר — ושום דבר לא נשמר עד שתאשרו. הוא גם מחפש וקורא קבצים בדרייב של סינרגי, ואפשר להדביק קישור לקובץ.</p>
               {EXAMPLES.map((e) => (
-                <button key={e} onClick={() => setInput(e)} className="press block w-full text-start text-[0.9375rem] rounded-2xl bg-surface px-4 py-3 min-h-tap text-stone-800 hover:bg-stone-100">{e}</button>
+                <button key={e} onClick={() => setInput(e)} className="press block w-full text-start text-[0.9375rem] rounded-card bg-surface px-4 py-3 min-h-tap text-stone-800 hover:bg-stone-100">{e}</button>
               ))}
             </div>
           )}
@@ -95,7 +105,7 @@ export function AiPanel() {
             m.role === 'user' ? (
               <div key={i} className="flex justify-start"><div className="max-w-[85%] rounded-[20px] rounded-ss-md bg-accent text-white text-[0.9375rem] px-4 py-2.5 whitespace-pre-wrap">{m.text}</div></div>
             ) : m.role === 'error' ? (
-              <div key={i} role="alert" className="text-sm text-signal bg-red-50 rounded-2xl px-4 py-2.5">{m.text}</div>
+              <div key={i} role="alert" className="text-sm text-signal bg-red-50 rounded-card px-4 py-2.5">{m.text}</div>
             ) : (
               <div key={i} className="space-y-2">
                 <div className="max-w-[92%] rounded-[20px] rounded-se-md bg-surface text-[0.9375rem] px-4 py-2.5 whitespace-pre-wrap text-stone-900">{m.text}</div>

@@ -40,7 +40,7 @@ export function SearchDialog() {
 
   return (
     <Modal open={searchOpen} onClose={() => { setSearchOpen(false); setQ(''); }} title="חיפוש">
-      <div className="flex items-center gap-2 rounded-xl bg-stone-100 px-3 min-h-tap focus-within:ring-2 focus-within:ring-indigo-200">
+      <div className="flex items-center gap-2 rounded-input bg-stone-100 px-3 min-h-tap focus-within:ring-2 focus-within:ring-indigo-200">
         <Search size={16} className="text-stone-400" />
         <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="פרויקט, משימה, איש קשר, אירוע…"
           className="flex-1 text-sm focus:outline-none bg-transparent"
